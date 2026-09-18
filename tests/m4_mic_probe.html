@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko"><meta charset="utf-8"><title>M4 마이크 소스 프로브</title>
+<body style="font-family:-apple-system,sans-serif">
+<h3>M4 fake-audio 캡처 프로브</h3>
+<p>Chrome <code>--use-file-for-fake-audio-capture</code> 가 실제로 파일 내용을
+마이크 입력으로 전달하는지 무서버(독립) 환경에서 확인하는 진단 페이지.</p>
+<div id="out">ready</div>
+<script>
+// 서버/브리지와 무관한 독립 진단 — getUserMedia → AnalyserNode 피크/RMS 측정
+window.__probe = async (seconds) => {
+  const secs = seconds || 4;
+  const cons = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: cons });
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (ctx.state === "suspended") { try { await ctx.resume(); } catch (e) {} }
+  const src = ctx.createMediaStreamSource(stream);
+  const an = ctx.createAnalyser();
+  an.fftSize = 2048;
+  src.connect(an);
+  const buf = new Float32Array(an.fftSize);
+  const track = stream.getAudioTracks()[0];
+  let peak = 0, sum = 0, n = 0, frames = 0;
+  const t0 = performance.now();
+  await new Promise((res) => {
+    const tick = () => {
+      an.getFloatTimeDomainData(buf);
+      for (let i = 0; i < buf.length; i++) { const a = Math.abs(buf[i]); if (a > peak) peak = a; sum += buf[i] * buf[i]; n++; }
+      frames++;
+      if ((performance.now() - t0) / 1000 < secs) requestAnimationFrame(tick); else res();
+    };
+    tick();
+  });
+  const out = {
+    seconds: Number(((performance.now() - t0) / 1000).toFixed(2)),
+    peak: Number(peak.toFixed(5)),
+    rms: Number(Math.sqrt(sum / Math.max(n, 1)).toFixed(5)),
+    analyserFrames: frames,
+    ctxState: ctx.state,
+    sampleRate: ctx.sampleRate,
+    settings: track.getSettings ? track.getSettings() : null,
+    label: track.label,
+  };
+  document.getElementById("out").textContent = JSON.stringify(out);
+  track.stop();
+  try { ctx.close(); } catch (e) {}
+  return out;
+};
+</script>
+</body></html>

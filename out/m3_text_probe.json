@@ -1,0 +1,38 @@
+[
+  {
+    "label": "A: server_vad + send_text",
+    "turn_detection": "{'type': 'server_vad', 'threshold': 0.7, 'silence_duration_ms': 1500}",
+    "assistant_response": false,
+    "assistant_text": "",
+    "usage_tokens": 0,
+    "errors": [],
+    "event_kinds": [
+      "connected"
+    ],
+    "timeline": [
+      {
+        "kind": "connected",
+        "t": 0.34,
+        "payload": "{\"session\": 1, \"voice\": \"longanlingxin\"}"
+      }
+    ]
+  },
+  {
+    "label": "B: manual(None) + send_text + commit + response.create",
+    "turn_detection": "None",
+    "assistant_response": false,
+    "assistant_text": "",
+    "usage_tokens": 0,
+    "errors": [],
+    "event_kinds": [
+      "connected"
+    ],
+    "timeline": [
+      {
+        "kind": "connected",
+        "t": 0.28,
+        "payload": "{\"session\": 1, \"voice\": \"longanlingxin\"}"
+      }
+    ]
+  }
+]

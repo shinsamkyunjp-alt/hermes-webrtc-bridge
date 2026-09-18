@@ -1,0 +1,1001 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Hermes 음성 통화 (WebRTC)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#03050a">
+<!--
+  M3 — 반응형 웹 프론트엔드 (단일 HTML5 SPA, 외부 의존성/빌드 도구 0)
+  ==========================================================================
+  * WebRTC: RTCPeerConnection + getUserMedia(AEC/NS/AGC) + DataChannel `events`
+  * 모바일: Screen WakeLock, AudioContext unlock(첫 제스처), safe-area 인셋
+  * UI: 대기/연결중/통화중/음소거/종료/오류 상태 + VAD 실시간 볼륨 게이지(canvas)
+        + 실시간 자막(사용자/AI/에이전트 위임) + 타이핑 입력 + 토큰 사용량
+  * 서버 계약: POST /api/offer {sdp,type} → {sdp,type} · POST /api/hangup
+        · GET /api/status · DataChannel {type,payload,ts}
+    인증: ?token=... (URL) 또는 localStorage(bridge_token) → Authorization: Bearer
+  * 테스트 훅: window.__bridge (state/connect/hangup/handleEvent/stats) — jsdom·CDP 검증용
+-->
+<style>
+/* =========================================================================
+   JARVIS HUD 스킨  —  레퍼런스: Iron Man JARVIS scanner ring (Pinterest)
+   ---------------------------------------------------------------------------
+   * 팔레트는 레퍼런스에서 추출: void #03050a / glow #0a1a24 / cyan #2ad4d4 /
+     teal #1a8f9c / rim #8af5e8 / hot #d9fffa / core #0b2a33
+   * 단색 틸 모노크롬 + 헤어라인 + 가산 블룸. 유일한 예외는 실패/경고 상태에
+     쓰는 --alert (의미 상태 전달용, 배너·pill.err 에서만).
+   * 외부 폰트·아이콘·CDN 0 — 시스템 폰트 + Canvas 도형만 (M3 계약 유지)
+   * 폰트: 데이터·수치는 모노, 문장은 시스템 산스 (Inter 미사용)
+   ========================================================================= */
+:root{
+  --void:#03050a; --void2:#050a12; --glow:#0a1a24;
+  --cyan:#2ad4d4; --teal:#1a8f9c; --rim:#8af5e8; --hot:#d9fffa;
+  --core:#0b2a33; --core-hi:#1d5a63;
+  --fg:#d9edf0; --dim:#7aa6af; --dim2:#5b8792;
+  --line:rgba(42,212,212,.15); --line2:rgba(42,212,212,.30);
+  --plate:rgba(9,24,33,.60); --plate2:rgba(5,13,20,.78);
+  --alert:#f0b464;
+  --ease:cubic-bezier(.32,.72,0,1);
+  --r-outer:22px; --r-inner:15px;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",system-ui,sans-serif;
+  --mic:.0; --ai:.0;
+}
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body{ margin:0; height:100%; background:var(--void); color:var(--fg);
+  font:15px/1.5 var(--sans); -webkit-font-smoothing:antialiased; }
+body{ display:flex; flex-direction:column; min-height:100dvh; position:relative;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+/* 보이드 글로우 + 비네트 + 스라인 (고정 레이어, 스크롤 컨테이너에 필터 금지) */
+body::before{ content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(120% 62% at 50% 22%, var(--glow) 0%, rgba(10,26,36,.35) 38%, rgba(3,5,10,0) 72%),
+    radial-gradient(100% 100% at 50% 50%, rgba(3,5,10,0) 52%, rgba(0,0,0,.72) 100%); }
+body::after{ content:""; position:fixed; inset:0; pointer-events:none; z-index:1; opacity:.5;
+  background:repeating-linear-gradient(0deg, rgba(138,245,232,.035) 0 1px, rgba(0,0,0,0) 1px 3px); }
+body > *{ position:relative; z-index:2; }
+
+/* ── 상단 레일 ────────────────────────────────────────────────────────── */
+header{ padding:14px 16px 12px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  border-bottom:1px solid var(--line); }
+header h1{ font-size:12px; margin:0 auto 0 0; font-weight:600; letter-spacing:.22em; text-transform:uppercase;
+  font-family:var(--mono); color:var(--rim); display:flex; align-items:center; gap:8px; }
+/* 브랜드 마크: 헤어라인 링 (장식 점 아님 — 로고 마크) */
+header h1::before{ content:""; width:11px; height:11px; border-radius:50%;
+  border:1px solid var(--cyan); box-shadow:0 0 8px rgba(42,212,212,.55), inset 0 0 4px rgba(42,212,212,.5); }
+.pill{ font-size:10.5px; font-family:var(--mono); letter-spacing:.13em; text-transform:uppercase;
+  padding:5px 10px; border-radius:999px; border:1px solid var(--line); color:var(--dim);
+  background:var(--plate2); white-space:nowrap; transition:all .5s var(--ease); }
+.pill:empty{ display:none; }   /* 값이 채워지기 전까지 자리 차지하지 않음 */
+.pill.live{ color:#02181b; background:var(--cyan); border-color:var(--cyan); font-weight:700;
+  box-shadow:0 0 18px rgba(42,212,212,.45); animation:breathe 2.6s var(--ease) infinite; }
+.pill.warn{ color:var(--alert); border-color:rgba(240,180,100,.55); }
+.pill.err{ color:var(--alert); border-color:var(--alert); background:rgba(240,180,100,.10); }
+@keyframes breathe{ 0%,100%{ box-shadow:0 0 14px rgba(42,212,212,.35); } 50%{ box-shadow:0 0 26px rgba(42,212,212,.62); } }
+
+main{ flex:1; display:flex; flex-direction:column; gap:11px; padding:12px 12px 10px; min-height:0; }
+
+/* ── 코어 스테이지 (스캐너 링) ─────────────────────────────────────────── */
+.core{ position:relative; display:flex; flex-direction:column; align-items:center; gap:12px;
+  padding:6px 0 2px; }
+#vizWrap{ position:relative; width:100%; display:flex; justify-content:center; align-items:center; }
+canvas#viz{ display:block; width:100%; max-width:min(264px, 31dvh); aspect-ratio:1/1; height:auto;
+  filter:drop-shadow(0 0 calc(10px + var(--ai) * 26px) rgba(42,212,212,.20)); transition:filter .4s var(--ease); }
+
+/* 링 위에 얹히는 텔레메트리 — 코너 브래킷 대신 사분면 정렬 */
+.telemetry{ width:100%; max-width:520px; display:grid; grid-template-columns:1fr 1fr;
+  gap:9px 16px; }
+.tm{ display:flex; flex-direction:column; gap:4px; }
+.tm .k{ font-family:var(--mono); font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--dim2); }
+.tm .v{ font-family:var(--mono); font-size:13px; color:var(--rim); letter-spacing:.04em; }
+.tm .v.big{ font-size:15px; color:var(--hot); }
+.tm.r{ align-items:flex-end; text-align:right; }
+/* 헤어라인 레 미터 — 폭은 JS가 인라인으로 쓴다.
+   ️ inset 단축 + right 지정은 오버컨스트레인으로 width 를 0 으로 만들 수 있어
+   롱드(top/bottom/left)만 다 (2026-09-17 실측: right:175px 로 인라인 width 무효화됨). */
+.bar{ position:relative; display:block; height:2px; width:100%;
+  background:rgba(42,212,212,.12); border-radius:2px; overflow:hidden; }
+.bar > i{ position:absolute; top:0; bottom:0; left:0; width:0; border-radius:2px;
+  background:linear-gradient(90deg, var(--teal), var(--rim)); transition:width .12s linear; }
+/* 오른쪽 정렬 열의 미터는 오른쪽에서 채운다 (라벨 정렬과 일치) */
+.tm.r .bar > i{ left:auto; right:0; background:linear-gradient(270deg, var(--teal), var(--rim)); }
+
+/* ── 더블 베젤 플레이트 (외곽 셸 + 내부 코어) ─────────────────────────── */
+.shell{ background:rgba(42,212,212,.045); border:1px solid var(--line); border-radius:var(--r-outer);
+  padding:5px; box-shadow:inset 0 1px 0 rgba(138,245,232,.07); }
+.shell > .plate,.card{ background:var(--plate2); border:1px solid rgba(42,212,212,.09);
+  border-radius:var(--r-inner); box-shadow:inset 0 1px 0 rgba(138,245,232,.05); }
+.card{ padding:12px; }
+
+/* ─ 자막 ─────────────────────────────────────────────────────────────── */
+#transcript{ flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:9px;
+  min-height:150px; max-height:46dvh; padding:14px; -webkit-overflow-scrolling:touch;
+  /* 스크롤 경계에서 내용이 뚝 끊기지 않게 아래를 페이드 (고정 높이라 GPU 비용 미미) */
+  -webkit-mask-image:linear-gradient(180deg, #000 0, #000 calc(100% - 22px), transparent 100%);
+  mask-image:linear-gradient(180deg, #000 0, #000 calc(100% - 22px), transparent 100%); }
+.bubble{ max-width:88%; padding:9px 13px; border-radius:14px; white-space:pre-wrap;
+  word-break:break-word; font-size:14.5px; line-height:1.55; animation:rise .5s var(--ease);
+  border:1px solid var(--line); background:rgba(9,24,33,.5); }
+@keyframes rise{ from{ opacity:0; transform:translateY(8px); filter:blur(3px); }
+                 to{ opacity:1; transform:none; filter:blur(0); } }
+.bubble.user{ align-self:flex-end; border-bottom-right-radius:4px;
+  border-color:var(--line2); background:linear-gradient(180deg, rgba(42,212,212,.13), rgba(26,143,156,.07)); color:var(--hot); }
+.bubble.assistant{ align-self:flex-start; border-bottom-left-radius:4px;
+  background:rgba(10,24,33,.86); color:#eaf6f8; font-size:15px; }
+.bubble.tool{ align-self:center; font-family:var(--mono); font-size:11.5px; color:var(--teal);
+  border-radius:10px; max-width:96%; border-style:dashed; }
+.bubble.ambient{ align-self:center; color:var(--dim); font-size:11.5px; font-family:var(--mono); }
+.bubble.system{ align-self:center; background:transparent; border-color:transparent; color:var(--dim2);
+  font-size:11px; font-family:var(--mono); }
+.bubble .who{ display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.18em;
+  text-transform:uppercase; opacity:.6; margin-bottom:4px; }
+#empty{ color:var(--dim2); font-size:12.5px; text-align:center; margin:auto; font-family:var(--mono);
+  letter-spacing:.06em; }
+
+/* ── 입력 / 컨트 독 ─────────────────────────────────────────────────── */
+.row{ display:flex; gap:8px; align-items:center; }
+input[type=text],input[type=password]{ flex:1; min-width:0; background:rgba(3,10,16,.72);
+  border:1px solid var(--line); color:var(--fg); border-radius:12px; padding:12px;
+  font-size:15px; font-family:var(--mono); transition:border-color .4s var(--ease), box-shadow .4s var(--ease); }
+input::placeholder{ color:var(--dim2); }
+input:focus{ outline:none; border-color:var(--line2); box-shadow:0 0 0 3px rgba(42,212,212,.10); }
+button{ border:1px solid var(--line); border-radius:999px; padding:14px 18px; min-height:46px;
+  font-size:13.5px; font-weight:600; font-family:var(--mono); letter-spacing:.08em; color:var(--fg);
+  background:linear-gradient(180deg, rgba(42,212,212,.07), rgba(9,24,33,.7) 55%);
+  box-shadow:inset 0 1px 0 rgba(138,245,232,.09); display:inline-flex; align-items:center;
+  justify-content:center; gap:9px; cursor:pointer;
+  transition:transform .45s var(--ease), background .45s var(--ease), border-color .45s var(--ease), box-shadow .45s var(--ease); }
+button:active{ transform:scale(.975); }
+button:disabled{ opacity:.42; cursor:not-allowed; }
+button.primary{ background:linear-gradient(180deg, var(--cyan), var(--teal) 92%);
+  border-color:var(--rim); color:#01161a; font-weight:800; letter-spacing:.12em;
+  box-shadow:0 0 26px rgba(42,212,212,.34), inset 0 1px 0 rgba(255,255,255,.42); }
+button.danger{ border-color:rgba(240,180,100,.45); color:var(--alert); background:rgba(240,180,100,.07); }
+button.ghost{ background:transparent; color:var(--dim); font-weight:500; box-shadow:none; }
+button.on{ border-color:var(--cyan); color:var(--cyan); background:rgba(42,212,212,.12);
+  box-shadow:0 0 16px rgba(42,212,212,.22); }
+/* 버-인-버튼: 주 CTA 안쪽에 아이콘 서클을 중첩 (flush) */
+.cta{ display:inline-flex; align-items:center; justify-content:center; gap:10px; position:relative; }
+.cta .ico{ width:24px; height:24px; border-radius:50%; display:grid; place-items:center;
+  background:rgba(2,24,27,.16); border:1px solid rgba(2,24,27,.22); font-size:10px; line-height:1;
+  transition:transform .5s var(--ease); }
+.cta:hover .ico{ transform:translateX(2px) scale(1.06); }
+.controls{ display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+.controls .wide{ grid-column:1 / -1; }
+
+/* ── 배너 ─────────────────────────────────────────────────────────────── */
+#banner{ display:none; font-size:13px; border-radius:var(--r-inner); padding:11px 13px;
+  font-family:var(--mono); letter-spacing:.02em;
+  background:rgba(240,180,100,.09); border:1px solid rgba(240,180,100,.5); color:#ffd9a8; }
+
+/* ── 고급 / 푸터 ──────────────────────────────────────────────────────── */
+details{ padding:2px; }
+summary{ color:var(--dim); font-size:11.5px; font-family:var(--mono); letter-spacing:.14em;
+  text-transform:uppercase; cursor:pointer; padding:6px 2px; }
+summary::marker{ color:var(--teal); }
+.meters{ display:flex; gap:16px; font-size:10px; color:var(--dim2); margin-top:10px; flex-wrap:wrap;
+  font-family:var(--mono); letter-spacing:.14em; text-transform:uppercase; }
+.meters b{ color:var(--rim); font-weight:600; letter-spacing:.04em; }
+code{ color:var(--cyan); font-family:var(--mono); }
+footer{ padding:8px 14px 16px; color:var(--dim2); font-size:9.5px; font-family:var(--mono);
+  letter-spacing:.12em; display:flex; gap:12px; flex-wrap:wrap; justify-content:space-between;
+  border-top:1px solid var(--line); }
+
+@media (min-width:680px){
+  main{ max-width:760px; margin:0 auto; width:100%; }
+  .controls{ grid-template-columns:repeat(4,1fr); }
+  .controls .wide{ grid-column:auto; }
+  .controls .wide.cta{ grid-column:span 2; }
+}
+@media (prefers-reduced-motion:reduce){
+  *{ animation-duration:.001ms !important; animation-iteration-count:1 !important;
+     transition-duration:.001ms !important; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Hermes</h1>
+  <span class="pill" id="statePill">대기</span>
+  <span class="pill" id="modePill"></span>
+  <span class="pill" id="voicePill"></span>
+</header>
+
+<main>
+  <div id="banner" role="alert"></div>
+
+  <!-- 코어: 자비스 스캐너 링 + 사분면 텔레메트리 -->
+  <section class="core">
+    <div id="vizWrap"><canvas id="viz" width="660" height="660"></canvas></div>
+    <div class="telemetry">
+      <div class="tm">
+        <span class="k">State</span>
+        <span class="v big" id="vadState">대기</span>
+      </div>
+      <div class="tm r">
+        <span class="k">Link</span>
+        <span class="v" id="connInfo">-</span>
+      </div>
+      <div class="tm">
+        <span class="k">Mic</span>
+        <span class="v" id="micLevel">0.00</span>
+        <span class="bar" id="micBar"><i></i></span>
+      </div>
+      <div class="tm r">
+        <span class="k">AI</span>
+        <span class="v" id="aiLevel">0.00</span>
+        <span class="bar" id="aiBar"><i></i></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="shell" style="flex:1;display:flex;min-height:0">
+    <div class="card" id="transcript" style="flex:1;display:flex;flex-direction:column;min-height:150px;padding:0">
+      <div id="empty">통화를 시작하면 실시간 자막이 여기에 표시됩니다.</div>
+    </div>
+  </div>
+
+  <div class="shell">
+    <div class="plate" style="padding:12px">
+      <div class="row" style="margin-bottom:10px">
+        <input type="text" id="textInput" placeholder="타이핑으로 말하기" autocomplete="off">
+        <button id="sendBtn" class="ghost" disabled>전송</button>
+      </div>
+      <div class="controls">
+        <button id="startBtn" class="primary wide cta">통화 시작<span class="ico">&#9654;</span></button>
+        <button id="muteBtn" disabled>음소거</button>
+        <button id="hangupBtn" class="danger" disabled>통화 종료</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="shell">
+    <div class="plate" style="padding:10px 12px">
+      <details>
+        <summary>고급 - 토큰 / 진단</summary>
+        <div class="row" style="margin-top:10px">
+          <input type="password" id="tokenInput" placeholder="BRIDGE_AUTH_TOKEN">
+          <button id="tokenSave" class="ghost">저장</button>
+        </div>
+        <div class="meters">
+          <span>턴 <b id="turnCount">0</b></span>
+          <span>토큰 <b id="tokenUsage">0</b></span>
+          <span>이벤트 <b id="eventCount">0</b></span>
+          <span>업타임 <b id="uptime">0s</b></span>
+          <span>RTT <b id="rtt">-</b></span>
+        </div>
+        <div style="margin-top:10px"><button id="clearBtn" class="ghost">자막 지우기</button></div>
+        <div class="meters" style="margin-top:12px;opacity:.8">
+          <span id="endpointInfo">endpoint: -</span>
+        </div>
+      </details>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span id="lastEvent">-</span>
+</footer>
+
+<audio id="remoteAudio" autoplay playsinline></audio>
+
+<script>
+"use strict";
+/* =========================================================================
+   Hermes WebRTC 브리지 클라이언트 (M3)
+   ========================================================================= */
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+
+  const CFG = {
+    token: params.get("token") || localStorage.getItem("bridge_token") || "",
+    statusPollMs: 3000,
+    connectTimeoutMs: 15000,
+    maxBubbles: 200,
+    stunFallback: [{ urls: ["stun:stun.l.google.com:19302"] }],
+  };
+  if (params.get("token")) localStorage.setItem("bridge_token", params.get("token"));
+
+  // ---- 상태 ----------------------------------------------------------------
+  const S = {
+    phase: "idle",           // idle | connecting | live | ended | error
+    muted: false,
+    wakeLock: null,
+    pc: null,
+    dc: null,
+    micStream: null,
+    micTrack: null,
+    remoteStream: null,
+    audioCtx: null,
+    micAnalyser: null,
+    aiAnalyser: null,
+    levels: { mic: 0, ai: 0 },
+    vad: "대기",
+    events: 0,
+    turns: 0,
+    usage: {},
+    rttMs: null,
+    lastEvent: "-",
+    session: 0,
+    pollTimer: null,
+    vizMode: "canvas",
+    startedAt: null,
+  };
+
+  // ---- UI 헬퍼 -------------------------------------------------------------
+  const PHASE_LABEL = { idle: "대기", connecting: "연결 중", live: "통화 중",
+                        ended: "종료", error: "오류" };
+  function renderStatePill() {
+    const pill = $("statePill");
+    let label = PHASE_LABEL[S.phase] || S.phase;
+    if (S.phase === "live" && S.muted) label += " (음소거)";
+    pill.textContent = label;
+    pill.className = "pill" + (S.phase === "live" ? " live" : S.phase === "error" ? " err" : "");
+  }
+  function setPhase(phase, note) {
+    S.phase = phase;
+    renderStatePill();
+    $("startBtn").disabled = phase === "connecting" || phase === "live";
+    $("hangupBtn").disabled = !(phase === "connecting" || phase === "live");
+    $("muteBtn").disabled = phase !== "live";
+    $("sendBtn").disabled = phase !== "live";
+    if (note) banner(note, phase === "error");
+  }
+  function banner(text, isError) {
+    const el = $("banner");
+    el.textContent = text;
+    el.style.display = text ? "block" : "none";
+    el.style.borderColor = isError ? "var(--err)" : "var(--line)";
+  }
+  function sys(text) { addBubble("system", text, "시스템"); }
+  function addBubble(kind, text, who) {
+    const box = $("transcript");
+    const empty = $("empty");
+    if (empty) empty.remove();
+    let el;
+    if (kind === "assistant" && S._lastAssistant) { el = S._lastAssistant; }
+    else {
+      el = document.createElement("div");
+      el.className = "bubble " + kind;
+      if (who) { const w = document.createElement("span"); w.className = "who"; w.textContent = who; el.appendChild(w); }
+      el.appendChild(document.createTextNode(text || ""));
+      box.appendChild(el);
+      S._lastAssistant = kind === "assistant" ? el : null;
+    }
+    if (el.lastChild && el.lastChild.nodeType === 3) el.lastChild.textContent = text || "";
+    while (box.children.length > CFG.maxBubbles) box.removeChild(box.firstChild);
+    box.scrollTop = box.scrollHeight;
+    return el;
+  }
+  function setVad(text, cls) {
+    S.vad = text;
+    $("vadState").textContent = text;
+  }
+  /* ── JARVIS 스캐너 링 (레퍼런스: Iron Man JARVIS HUD) ──────────────────────
+     · 로브 토러스: 반지름을 3/5/7차 사인 하모닉으로 변조 → 물결치는 실루엣
+     · 와이어프레임 메시 2패밀리 + 방사 크로스해치, 가산 합성(lighter)
+     · 바깥/안쪽 실루엣은 은 림으로 덧그림 (shadowBlur = 가산 블룸)
+     · 상단·좌하단 호에 정점 파티클 산포 (마이크 레벨이 밝기를 올린다)
+     · 중앙 코어: 은 틸 원반 + 광 + 고스트 궤도 호 3개 (AI 발화 시 맥동)
+     ※ 재생 중 AI 발화 신호는 element 모드에서 analyser 가 없으므로
+       서버 VAD 상태(S.vad)에서 유도한다 — 링이 '살아있다'는 피드백.
+  ------------------------------------------------------------------------- */
+  const REDUCED = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const RING = { seeded: false, parts: [] };
+
+  /* 캔버스 백킹 스토어를 CSS 크기 × DPR 로 맞춘다.
+     (고정 660px 를 330px 로 축소하면 헤어라인이 뭉개지고 계단이 진다) */
+  function sizeCanvas() {
+    const cv = $("viz");
+    if (!cv) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const css = cv.clientWidth || 330;
+    const px = Math.max(240, Math.round(css * dpr));
+    if (cv.width !== px) { cv.width = px; cv.height = px; }
+  }
+  window.addEventListener("resize", sizeCanvas);
+
+  function seedParticles(n) {
+    RING.parts = [];
+    for (let i = 0; i < n; i++) {
+      RING.parts.push({ a: Math.random() * Math.PI * 2, j: Math.random(), s: .4 + Math.random() * .6 });
+    }
+  }
+
+  function drawScanner(ctx, w, h, mic, ai, t, k) {
+    k = k || 1;   // CSS 1px = k 장치 px — 해상도와 무관하게 같은 굵기로 보이게
+    const cx = w / 2, cy = h / 2, R = Math.min(w, h) * .335;
+    ctx.clearRect(0, 0, w, h);
+
+    const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 2.6);
+    bg.addColorStop(0, "rgba(10,26,36,.96)");
+    bg.addColorStop(.45, "rgba(7,18,26,.55)");
+    bg.addColorStop(1, "rgba(3,5,10,0)");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+
+    const amp = .022 + mic * .045;
+    const rad = (a) => R * (1
+      + amp * Math.sin(3 * a + t * .42)
+      + amp * .72 * Math.sin(5 * a - t * .33)
+      + amp * .45 * Math.sin(7 * a + t * .24));
+
+    ctx.globalCompositeOperation = "lighter";
+    ctx.lineCap = "round";
+
+    const SEG = 72;
+    // 메시: 두 패밀리 실루엣
+    for (let fam = 0; fam < 2; fam++) {
+      ctx.beginPath();
+      for (let i = 0; i <= SEG; i++) {
+        const a = (i / SEG) * Math.PI * 2;
+        const q = rad(a) * (fam === 0 ? 1 : .86);
+        const x = cx + Math.cos(a) * q, y = cy + Math.sin(a) * q;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = fam === 0 ? "rgba(42,212,212,.20)" : "rgba(26,143,156,.17)";
+      ctx.lineWidth = k;
+      ctx.stroke();
+    }
+    // 메시: 방사 크로스해치 (두 패밀리를 잇는 결)
+    ctx.beginPath();
+    for (let i = 0; i < SEG; i += 2) {
+      const a = (i / SEG) * Math.PI * 2, r1 = rad(a);
+      ctx.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+      ctx.lineTo(cx + Math.cos(a) * r1 * .86, cy + Math.sin(a) * r1 * .86);
+    }
+    ctx.strokeStyle = "rgba(26,143,156,.20)";
+    ctx.lineWidth = k;
+    ctx.stroke();
+
+    // 실루엣 림 (바깥/안쪽) — 가산 블룸
+    for (const [rk, col, lw] of [[1, "rgba(138,245,232,.78)", 1.4], [.86, "rgba(42,212,212,.42)", 1]]) {
+      ctx.beginPath();
+      for (let i = 0; i <= SEG * 2; i++) {
+        const a = (i / (SEG * 2)) * Math.PI * 2, r = rad(a) * rk;
+        const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = col;
+      ctx.lineWidth = lw * k;
+      ctx.shadowColor = "rgba(42,212,212,.85)";
+      ctx.shadowBlur = 16 * k;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    // 정점 파티클 (상단·좌하단 밀집 / 하단 성김)
+    if (!RING.seeded) { seedParticles(150); RING.seeded = true; }
+    for (const p of RING.parts) {
+      if (!REDUCED) { p.a += .0016 * p.s; if (p.a > Math.PI * 2) p.a -= Math.PI * 2; }
+      if (p.j > .78 && p.a > .7 && p.a < 2.5) continue;
+      const r = rad(p.a) * (.985 + p.j * .02);
+      const x = cx + Math.cos(p.a) * r, y = cy + Math.sin(p.a) * r;
+      const b = (.35 + mic * .65) * (.4 + p.j * .6);
+      ctx.fillStyle = "rgba(217,255,250," + b.toFixed(3) + ")";
+      ctx.beginPath();
+      ctx.arc(x, y, (.9 + p.j * 1.2) * k, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 고스트 궤도 호 3개
+    for (const [rk, o] of [[.42, .20], [.52, .15], [.63, .11]]) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, R * rk, t * .12 + rk * 3, t * .12 + rk * 3 + Math.PI * 1.25);
+      ctx.strokeStyle = "rgba(42,212,212," + o + ")";
+      ctx.lineWidth = k;
+      ctx.stroke();
+    }
+
+    // 중앙 코어
+    const cr = R * .15, reach = cr * (2.6 + ai * 1.6);
+    const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, reach);
+    halo.addColorStop(0, "rgba(29,90,99," + (.55 + ai * .40).toFixed(2) + ")");
+    halo.addColorStop(.55, "rgba(11,42,51,.45)");
+    halo.addColorStop(1, "rgba(11,42,51,0)");
+    ctx.fillStyle = halo;
+    ctx.beginPath(); ctx.arc(cx, cy, reach, 0, Math.PI * 2); ctx.fill();
+
+    const core = ctx.createRadialGradient(cx - cr * .3, cy + cr * .3, 0, cx, cy, cr);
+    core.addColorStop(0, "rgba(29,90,99,.95)");
+    core.addColorStop(1, "rgba(11,42,51,.98)");
+    ctx.beginPath(); ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+    ctx.fillStyle = core; ctx.fill();
+    ctx.strokeStyle = "rgba(138,245,232," + (.35 + ai * .50).toFixed(2) + ")";
+    ctx.lineWidth = k;
+    ctx.stroke();
+
+    ctx.globalCompositeOperation = "source-over";
+  }
+
+  function draw() {
+    const cv = $("viz");
+    let ctx = null;
+    if (S.vizMode === "canvas") {
+      try { ctx = cv && cv.getContext ? cv.getContext("2d") : null; } catch (e) { ctx = null; }
+      if (!ctx) S.vizMode = "text";           // jsdom 등 canvas 없는 환경 → 수치 표시만
+    }
+    const w = cv ? cv.width : 0, h = cv ? cv.height : 0;
+    const scale = cv && cv.clientWidth ? w / cv.clientWidth : 1;   // CSS 1px → 장치 px
+    const mic = S.levels.mic;
+    // element 모드에선 AI analyser 가 없으므로 서버 VAD 상태로 발화 여부를 유도한다.
+    const speaking = String(S.vad || "").indexOf("말") >= 0;
+    const t = REDUCED ? 0 : performance.now() / 1000;
+    const ai = Math.max(S.levels.ai, speaking ? .34 + .22 * Math.sin(t * 6) : 0);
+    const root = document.documentElement;
+    root.style.setProperty("--mic", mic.toFixed(3));
+    root.style.setProperty("--ai", ai.toFixed(3));
+    // 레벨 바는 CSS 변수 calc 대신 직접 폭을 쓴다 (검증 가능·브라우저 편차 0)
+    const setBar = (id, v) => {
+      const el = document.querySelector("#" + id + " > i");
+      if (el) el.style.width = (Math.max(0, Math.min(1, v)) * 100).toFixed(1) + "%";
+    };
+    setBar("micBar", mic);
+    setBar("aiBar", ai);
+    if (ctx && w && h) drawScanner(ctx, w, h, mic, ai, t, scale);
+    $("micLevel").textContent = mic.toFixed(2);
+    $("aiLevel").textContent = ai.toFixed(2);
+  }
+  function tick() {
+    const read = (an) => {
+      if (!an || !S.audioCtx) return 0;
+      const buf = new Uint8Array(an.fftSize);
+      try { an.getByteTimeDomainData(buf); } catch (e) { return 0; }
+      let sum = 0;
+      for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; sum += v * v; }
+      return Math.min(1, Math.sqrt(sum / buf.length) * 3.2);
+    };
+    S.levels.mic = read(S.micAnalyser);
+    S.levels.ai = read(S.aiAnalyser);
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  // ---- API -----------------------------------------------------------------
+  function apiUrl(path) { return path; }
+  async function api(method, path, body) {
+    const headers = {};
+    if (CFG.token) headers["Authorization"] = "Bearer " + CFG.token;
+    if (body !== undefined) headers["Content-Type"] = "application/json";
+    const res = await fetch(apiUrl(path), {
+      method, headers, body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    if (res.status === 401) throw new Error("인증 실패(401) — 토큰을 확인하세요 (?token=...)");
+    const text = await res.text();
+    let json = null;
+    try { json = text ? JSON.parse(text) : null; } catch (e) { json = { raw: text }; }
+    if (!res.ok) throw new Error((json && (json.detail || json.raw)) || ("HTTP " + res.status));
+    return json;
+  }
+
+  // ---- 오디오 컨스트 / 분석기 --------------------------------------------
+  async function unlockAudio() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!S.audioCtx) S.audioCtx = new AC();
+      if (S.audioCtx.state === "suspended") await S.audioCtx.resume();
+      return S.audioCtx;
+    } catch (e) { return null; }
+  }
+  // ⚠️ 안드로이드 오디오 출력 모드 (2026-09-17 실기기)
+    //   "element"(기본) = <audio> 엘리먼트로 재생 → Chrome AEC/NS가 참조 신호를
+    //                     가질 수 있어 에코 억제가 산다. AI 레벨 미터는 포기.
+    //   "webaudio"      = WebAudio로 스피커 직결(레벨 미터 살아남) — 안드로이드에서
+    //                     AEC 참조가 끊겨 에코가 마이크로 돌아오고 ASR이 한국어를
+    //                     중국어/영어로 오전사한다. ?out=webaudio 로 전환.
+    const OUT_MODE = new URLSearchParams(location.search).get("out") || "element";
+    const NEEDS_WEBAUDIO_OUT = /Android/i.test(navigator.userAgent || "");
+
+  // 어떤 터치든 AudioContext를 깨워둔다 (Android 자동재생 정책 대비)
+  ["pointerdown", "touchstart", "click"].forEach((evName) => {
+    document.addEventListener(evName, () => {
+      if (S.audioCtx && S.audioCtx.state === "suspended") S.audioCtx.resume();
+    }, { passive: true });
+  });
+
+  function attachAnalyser(stream, which) {
+    if (which === "ai" && OUT_MODE !== "webaudio") {
+      // AI 스트림은 WebAudio에 절대 물리지 않는다(엘리먼트 전용 재생).
+      // 이유: 안드로이드에서 (a) 엘리먼트 출력이 죽거나 (b) AEC 참조가 끊겨
+      //       에코가 마이크로 돌아오고 ASR이 오전사한다.
+      const el = $("remoteAudio");
+      if (el) el.muted = false;
+      S.aiAnalyser = null;
+      return null;
+    }
+    if (!S.audioCtx || !stream) return null;
+    try {
+      const src = S.audioCtx.createMediaStreamSource(stream);
+      const an = S.audioCtx.createAnalyser();
+      an.fftSize = 512;
+      an.smoothingTimeConstant = 0.65;
+      src.connect(an);
+      // ⚠️ Chrome은 출력이 목적지까지 이어지지 않는 노드를 컬링(culling)해
+      //    analyser 값이 0으로 고정될 수 있다 → 무음 gain(0)으로 목적지까지
+      //    연결해 그래프를 살려둔다(소리는 0이라 하울링/이중재생 없음).
+      if (!S._analyserSink) {
+        const sink = S.audioCtx.createGain();
+        sink.gain.value = 0;
+        sink.connect(S.audioCtx.destination);
+        S._analyserSink = sink;
+      }
+      an.connect(S._analyserSink);
+      if (which === "ai") {
+        // 마이크 분석기는 절대 스피커로 보내지 않는다(하울링).
+        // AI 스트림만 안드로이드에서 WebAudio → 스피커로 직결한다.
+        if (NEEDS_WEBAUDIO_OUT) {
+          const g = S.audioCtx.createGain();
+          g.gain.value = 1.0;
+          an.connect(g);              // AnalyserNode는 통과형
+          g.connect(S.audioCtx.destination);
+          S.aiGain = g;
+          const el = $("remoteAudio");
+          if (el) el.muted = true;
+        }
+      }
+      if (which === "mic") S.micAnalyser = an; else S.aiAnalyser = an;
+      return an;
+    } catch (e) { return null; }
+  }
+
+  // ---- WakeLock ------------------------------------------------------------
+  async function requestWakeLock() {
+    try {
+      if (navigator.wakeLock && navigator.wakeLock.request) {
+        S.wakeLock = await navigator.wakeLock.request("screen");
+        if (S.wakeLock.addEventListener) {
+          S.wakeLock.addEventListener("release", () => { S.wakeLock = null; });
+        }
+      }
+    } catch (e) { /* 미지원/거부 — 통화 자체는 계속 */ }
+  }
+  function releaseWakeLock() {
+    try { if (S.wakeLock) S.wakeLock.release(); } catch (e) {}
+    S.wakeLock = null;
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && S.phase === "live" && !S.wakeLock) requestWakeLock();
+  });
+
+  // ---- DataChannel 이벤트 계약 --------------------------------------------
+  function handleEvent(type, payload) {
+    payload = payload || {};
+    S.events += 1;
+    S.lastEvent = type;
+    $("eventCount").textContent = String(S.events);
+    $("lastEvent").textContent = type;
+    switch (type) {
+      case "bridge_ready":
+        $("modePill").textContent = payload.mode || "?";
+        $("voicePill").textContent = payload.voice || "?";
+        break;
+      case "session_started":
+        S.session = payload.session || S.session;
+        S.startedAt = Date.now();
+        $("modePill").textContent = payload.mode || "?";
+        $("voicePill").textContent = payload.voice || "?";
+        setPhase("live");
+        setVad("듣는 중");
+        sys("통화가 연결되었습니다. (세션 #" + S.session + ", voice=" + (payload.voice || "?") + ")");
+        break;
+      case "connected":
+        setVad("듣는 중");
+        break;
+      case "speech_started":
+        setVad("듣는 중");
+        break;
+      case "response_started":
+        S.turns = payload.turn != null ? payload.turn : S.turns + 1;
+        $("turnCount").textContent = String(S.turns);
+        setVad("AI 응답 중");
+        break;
+      case "response_done":
+        S.usage = payload.usage || S.usage;
+        $("tokenUsage").textContent = String(S.usage.tokens_total || 0);
+        setVad("듣는 중");
+        S._lastAssistant = null;          // 다음 응답은 새 말풍선
+        break;
+      case "user_transcript":
+        setVad("인식됨");
+        addBubble("user", payload.text, "나");
+        break;
+      case "assistant_transcript":
+        addBubble("assistant", payload.text, "Hermes");
+        break;
+      case "ambient_transcript":
+        addBubble("ambient", payload.text, "주변음");
+        break;
+      case "tool_call":
+        S._lastAssistant = null;
+        addBubble("tool", "🛠 헤르메스 에이전트에 위임 중… " + (payload.task || ""), "에이전트");
+        setVad("위임 중");
+        break;
+      case "tool_result":
+        addBubble("tool", "✅ 에이전트 결과 수신 (" + (payload.chars || 0) + "자)", "에이전트");
+        break;
+      case "error":
+        setVad("오류");
+        banner("세션 오류: " + (payload.code || "") + " " + (payload.message || ""), true);
+        break;
+      case "disconnected":
+        setVad("재연결 중");
+        sys("세션 연결이 끊겨 자동 재연결을 시도합니다…");
+        break;
+      case "closed":
+        sys("세션이 종료되었습니다.");
+        if (S.phase === "live") setPhase("ended");
+        break;
+      case "peer_closed":
+        banner("PeerConnection 종료: " + (payload.state || ""), true);
+        teardown("peer closed");
+        break;
+      case "datachannel_closed":
+        sys("이벤트 채널이 닫습니다.");
+        break;
+      case "ice_gather_timeout":
+        banner("ICE 후보 수집 시간 초과 — NAT/Tailscale 경로를 확인하세요.", true);
+        break;
+      case "unsupported_track":
+        sys("지원하지 않는 트랙: " + (payload.kind || ""));
+        break;
+      default:
+        break;                              // 미지의 이벤트는 무시(전방 호환)
+    }
+  }
+
+  async function pollStatus() {
+    if (S.phase !== "live" && S.phase !== "connecting") return;
+    try {
+      const st = await api("GET", "/api/status");
+      if (st.usage) {
+        S.usage = st.usage;
+        $("tokenUsage").textContent = String(st.usage.tokens_total || 0);
+      }
+      $("turnCount").textContent = String(st.turns || S.turns);
+      $("uptime").textContent = Math.round(st.uptime_s || 0) + "s";
+      if (st.adapter && st.adapter.track && st.adapter.track.pace_late_ms_max != null) {
+        $("connInfo").textContent = "pc=" + (st.pc_state || "-") + " ice=" + (st.ice_state || "-");
+      }
+    } catch (e) { /* 상태 폴링 실패는 무시 */ }
+  }
+
+  // ---- 연결 ---------------------------------------------------------------
+  async function iceServers() {
+    try {
+      const st = await api("GET", "/api/status");
+      const list = (st.ice_servers || []).map((s) => {
+        if (typeof s === "string") return { urls: [s] };
+        if (s && s.urls) return s;
+        return null;
+      }).filter(Boolean);
+      if (list.length) return list;
+    } catch (e) { /* 폴백 사용 */ }
+    return CFG.stunFallback;
+  }
+
+  async function connect() {
+    if (S.phase === "connecting" || S.phase === "live") return;
+    banner("");
+    setPhase("connecting");
+    S._lastAssistant = null;
+    await unlockAudio();
+    requestWakeLock();
+
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("이 브라우저는 getUserMedia를 지원하지 않습니다 (HTTPS 필요)");
+      }
+      S.micStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        video: false,
+      });
+    } catch (err) {
+      setPhase("error", "마이크 접근 실패: " + (err && err.message ? err.message : err) +
+        " — HTTPS(또는 localhost)에서 실행하고 브라우저 마이크 권한을 허용하세요.");
+      return;
+    }
+
+    try {
+      attachAnalyser(S.micStream, "mic");
+      const servers = await iceServers();
+      S.iceServersUsed = servers;
+      const pc = new RTCPeerConnection({ iceServers: servers });
+      S.pc = pc;
+
+      const dc = pc.createDataChannel("events");       // 브라우저가 이벤트 채널을 만든다
+      S.dc = dc;
+      dc.onopen = () => { sys("이벤트 채널 연결됨"); };
+      dc.onclose = () => { sys("이벤트 채널 닫힘"); };
+      dc.onmessage = (ev) => {
+        let item = null;
+        try { item = JSON.parse(ev.data); } catch (e) { return; }
+        if (item && item.type) handleEvent(item.type, item.payload);
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        $("connInfo").textContent = "ice=" + pc.iceConnectionState;
+        if (pc.iceConnectionState === "failed") banner("ICE 연결 실패 — 네트워크 경로 확인 필요", true);
+      };
+      pc.onconnectionstatechange = () => {
+        $("connInfo").textContent = "pc=" + pc.connectionState;
+        if (pc.connectionState === "failed" || pc.connectionState === "closed") {
+          if (S.phase === "live") setPhase("ended");
+        }
+      };
+      pc.ontrack = (ev) => {
+        S.remoteStream = ev.streams && ev.streams[0] ? ev.streams[0] : null;
+        const audio = $("remoteAudio");
+        try {
+          if (S.remoteStream) { audio.srcObject = S.remoteStream; }
+          else { audio.srcObject = new MediaStream([ev.track]); S.remoteStream = audio.srcObject; }
+          const p = audio.play();
+          if (p && p.catch) p.catch(() => { banner("자동재생이 차단되었습니다: 화면을 한 번 터치하세요.", true); });
+        } catch (e) {}
+        const west = S.remoteStream;
+        if (west) attachAnalyser(west, "ai");
+        if (ev.track && ev.track.addEventListener) {
+          ev.track.addEventListener("ended", () => sys("AI 오디오 트랙 종료"));
+        }
+      };
+
+      S.micTrack = S.micStream.getAudioTracks()[0];
+      if (S.micTrack) {
+        S.micTrack.enabled = !S.muted;
+        pc.addTrack(S.micTrack, S.micStream);
+      }
+
+      const t0 = performance.now();
+      await pc.setLocalDescription(await pc.createOffer());
+      await waitIceGathering(pc);
+      const answer = await api("POST", "/api/offer",
+        { sdp: pc.localDescription.sdp, type: pc.localDescription.type || "offer" });
+      if (!answer || !answer.sdp) throw new Error("서버가 유효한 SDP Answer를 반환하지 않았습니다");
+      await pc.setRemoteDescription({ type: answer.type || "answer", sdp: answer.sdp });
+      S.rttMs = Math.round(performance.now() - t0);
+      $("rtt").textContent = S.rttMs + "ms";
+      $("endpointInfo").textContent = "offer→answer " + S.rttMs + "ms · ice=" +
+        (S.iceServersUsed || []).length + " server(s)";
+
+      const deadline = Date.now() + CFG.connectTimeoutMs;
+      while (pc.connectionState !== "connected" && Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, 120));
+      }
+      if (pc.connectionState !== "connected") {
+        // state=closed 는 ICE 실패가 아니라 '연결 시도 중 페이지가 정리된' 경우다
+        // (새로고침· 전환·이미 종료). 진짜 ICE 실패와 구분해서 안내한다.
+        if (pc.connectionState === "closed") {
+          banner("연결이 중단되었습니다: 페이지를 새로 열고 '통화 시작'을 한 번만 눌러주세요.", false);
+        } else {
+          banner("PeerConnection 미연결 (state=" + pc.connectionState + ") — ICE/네트워크 확인", true);
+        }
+      } else {
+        setPhase("live");
+        setVad("듣는 중");
+      }
+      if (!S.pollTimer) S.pollTimer = setInterval(pollStatus, CFG.statusPollMs);
+    } catch (err) {
+      setPhase("error", "통화 연결 실패: " + (err && err.message ? err.message : err));
+      await teardown("connect failed");
+    }
+  }
+
+  function waitIceGathering(pc, timeoutMs) {
+    timeoutMs = timeoutMs || 5000;
+    if (pc.iceGatheringState === "complete") return Promise.resolve();
+    return new Promise((resolve) => {
+      const done = () => { pc.removeEventListener("icegatheringstatechange", onChange); resolve(); };
+      const onChange = () => { if (pc.iceGatheringState === "complete") done(); };
+      pc.addEventListener("icegatheringstatechange", onChange);
+      setTimeout(done, timeoutMs);
+    });
+  }
+
+  async function teardown(reason) {
+    releaseWakeLock();
+    if (S.pollTimer) { clearInterval(S.pollTimer); S.pollTimer = null; }
+    try { if (S.dc && S.dc.readyState === "open") S.dc.close(); } catch (e) {}
+    try { if (S.pc) await S.pc.close(); } catch (e) {}
+    try {
+      if (S.micStream) S.micStream.getTracks().forEach((t) => t.stop());
+    } catch (e) {}
+    S.pc = null; S.dc = null; S.micStream = null; S.micTrack = null;
+    S.micAnalyser = null; S.aiAnalyser = null;
+    S.levels.mic = 0; S.levels.ai = 0;
+    setVad("대기");
+    if (S.phase !== "error") setPhase("ended");
+    if (S.phase !== "error") banner("");   // 오류 안내문은 사용자가 읽을 때까지 유지
+  }
+
+  async function hangup() {
+    if (S.phase === "idle" || S.phase === "ended") { await teardown("idle"); return; }
+    try { if (S.dc && S.dc.readyState === "open") S.dc.send(JSON.stringify({ cmd: "hangup" })); } catch (e) {}
+    try { await api("POST", "/api/hangup", {}); } catch (e) {}
+    await teardown("hangup");
+    sys("통화를 종료했습니다.");
+  }
+
+  function sendText() {
+    const input = $("textInput");
+    const text = (input.value || "").trim();
+    if (!text || !S.dc || S.dc.readyState !== "open") return;
+    S.dc.send(JSON.stringify({ cmd: "text", text }));
+    addBubble("user", text, "나 (타이핑)");
+    input.value = "";
+  }
+
+  function toggleMute() {
+    S.muted = !S.muted;
+    if (S.micTrack) S.micTrack.enabled = !S.muted;
+    const btn = $("muteBtn");
+    btn.textContent = S.muted ? "음소거 해제" : "음소거";
+    btn.className = S.muted ? "on" : "";
+    renderStatePill();
+  }
+
+  // ---- 초기화 -------------------------------------------------------------
+  function init() {
+    $("startBtn").addEventListener("click", () => { unlockAudio(); connect(); });
+    $("hangupBtn").addEventListener("click", hangup);
+    $("muteBtn").addEventListener("click", toggleMute);
+    $("sendBtn").addEventListener("click", sendText);
+    $("textInput").addEventListener("keydown", (e) => { if (e.key === "Enter") sendText(); });
+    $("tokenInput").value = CFG.token || "";
+    $("tokenSave").addEventListener("click", () => {
+      CFG.token = ($("tokenInput").value || "").trim();
+      if (CFG.token) localStorage.setItem("bridge_token", CFG.token);
+      else localStorage.removeItem("bridge_token");
+      banner(CFG.token ? "토큰을 저장했습니다." : "토큰을 삭제했습니다.", false);
+    });
+    $("clearBtn").addEventListener("click", () => {
+      const box = $("transcript");
+      box.innerHTML = '<div id="empty">통화를 시작하면 실시간 자막이 여기에 표시됩니다.</div>';
+      S._lastAssistant = null;
+    });
+    window.addEventListener("beforeunload", () => { try { hangup(); } catch (e) {} });
+
+    if (!CFG.token) {
+      banner("BRIDGE_AUTH_TOKEN이 설정된 서버라면 URL에 ?token=...  붙여 접속하세요.", false);
+    }
+    $("endpointInfo").textContent = "endpoint: " + location.origin;
+    setPhase("idle");
+    sizeCanvas();
+    requestAnimationFrame(tick);
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      const secure = window.isSecureContext;
+      if (!secure) banner("HTTPS가 아닙니다 — 모바일 브라우저는 마이크를 차단합니다 (Tailscale Serve 사용).", true);
+    }
+  }
+
+  // 서버 이벤트 단위 테스트/자동화용 훅
+  window.__bridge = {
+    state: S, CFG, handleEvent, connect, hangup, teardown, sendText, toggleMute,
+    addBubble, setPhase, els: { transcript: () => $("transcript") },
+    bubbles: () => Array.from($("transcript").querySelectorAll(".bubble"))
+      .map((el) => ({ kind: el.className.replace("bubble ", ""), text: el.textContent })),
+    phase: () => S.phase,
+    remoteStats: async () => {
+      if (!S.pc || !S.pc.getStats) return null;
+      const out = { inbound: {}, outbound: {} };
+      const stats = await S.pc.getStats();
+      stats.forEach((r) => {
+        if (r.type === "inbound-rtp" && r.kind === "audio") {
+          out.inbound = { bytesReceived: r.bytesReceived, packetsReceived: r.packetsReceived,
+                          jitter: r.jitter, audioLevel: r.audioLevel };
+        }
+        if (r.type === "outbound-rtp" && r.kind === "audio") {
+          out.outbound = { bytesSent: r.bytesSent, packetsSent: r.packetsSent };
+        }
+      });
+      return out;
+    },
+  };
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+</script>
+</body>
+</html>

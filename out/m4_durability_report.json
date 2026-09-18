@@ -1,0 +1,1654 @@
+{
+  "started": "2026-09-15 03:21:21",
+  "phases": {
+    "A": {
+      "inject_probe": {
+        "peak": 0.7501,
+        "rms": 0.13645,
+        "frames": 74
+      },
+      "inject_peak_max": 0.6546,
+      "user_transcript": "안녕 하 세요, 오늘 기 분이 어떠 신가요？짧 게 한 문장 으로 인사 해 주세요. ",
+      "assistant_transcript": "안녕하세요, 오늘도 차분하게 일할 준비가 되어 있습니다.",
+      "turns": 1,
+      "usage": {
+        "audio_in_bytes": 227200,
+        "audio_out_bytes": 172800,
+        "responses": 1,
+        "started_at": 1789410094.23506,
+        "voice": "longanlingxin",
+        "tokens_in": 538,
+        "tokens_out": 61,
+        "tokens_audio_in": 67,
+        "tokens_total": 599,
+        "tool_calls": 0,
+        "sessions": 1,
+        "dropped_in_chunks": 0
+      },
+      "adapter_frames_in": 381,
+      "adapter_up_bytes": 243200,
+      "adapter_input_peak": 32767,
+      "adapter_stereo_frames": 381,
+      "track": {
+        "frames_out": 386,
+        "silent_frames": 374,
+        "underruns": 374,
+        "flushes": 1,
+        "fed_bytes": 172800,
+        "resample_samples_out": 172768,
+        "dropped_bytes": 274496,
+        "buffered_bytes": 48000,
+        "pts_jumps": 0,
+        "sample_rate": 48000,
+        "frame_samples": 960,
+        "pace_late_ms_max": 0.0
+      },
+      "browser_inbound": {
+        "bytesReceived": 5335,
+        "packetsReceived": 386,
+        "jitter": 0.001,
+        "audioLevel": 0.17361980040894803
+      },
+      "browser_outbound": {
+        "bytesSent": 24478,
+        "packetsSent": 385
+      },
+      "webrtc": {
+        "rtt_s": 0.001,
+        "nominated": true
+      },
+      "timestamps": {
+        "speech_started": 813370.680985,
+        "response_started": 813376.86613325,
+        "user_transcript_done": 813377.250298625,
+        "server_first_audio": 813377.091001583,
+        "browser_first_audio": 813371.216817666
+      },
+      "latency_ms": {
+        "speech_started→response_started": 6185.1,
+        "response_started→서버첫오디오": 224.9,
+        "서버첫오디오→브라우저도달(WebRTC송출지연)": -5874.18,
+        "webrtc_rtt": 1.0
+      },
+      "echo_gate": {
+        "responding_samples": 4,
+        "audio_in_bytes_delta_during_response": 0,
+        "audio_in_bytes_delta_when_idle": 179200
+      },
+      "samples": [
+        {
+          "t_mono": 813371.216817666,
+          "t": 0.0,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 82,
+          "silent_frames": 82,
+          "frames_in": 77,
+          "bytes_up": 48000,
+          "input_peak": 32767,
+          "audio_in_bytes": 48000,
+          "inbound_bytes": 246,
+          "inj_peak": 0.33142
+        },
+        {
+          "t_mono": 813371.318314125,
+          "t": 0.1,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 87,
+          "silent_frames": 87,
+          "frames_in": 82,
+          "bytes_up": 51200,
+          "input_peak": 32767,
+          "audio_in_bytes": 51200,
+          "inbound_bytes": 261,
+          "inj_peak": 0.35689
+        },
+        {
+          "t_mono": 813371.420913333,
+          "t": 0.21,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 92,
+          "silent_frames": 92,
+          "frames_in": 87,
+          "bytes_up": 54400,
+          "input_peak": 32767,
+          "audio_in_bytes": 54400,
+          "inbound_bytes": 276,
+          "inj_peak": 0.04741
+        },
+        {
+          "t_mono": 813371.523421791,
+          "t": 0.31,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 97,
+          "silent_frames": 97,
+          "frames_in": 93,
+          "bytes_up": 57600,
+          "input_peak": 32767,
+          "audio_in_bytes": 57600,
+          "inbound_bytes": 291,
+          "inj_peak": 0.46568
+        },
+        {
+          "t_mono": 813371.626117708,
+          "t": 0.41,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 102,
+          "silent_frames": 102,
+          "frames_in": 97,
+          "bytes_up": 60800,
+          "input_peak": 32767,
+          "audio_in_bytes": 60800,
+          "inbound_bytes": 306,
+          "inj_peak": 0.41543
+        },
+        {
+          "t_mono": 813371.727394583,
+          "t": 0.51,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 108,
+          "silent_frames": 108,
+          "frames_in": 103,
+          "bytes_up": 64000,
+          "input_peak": 32767,
+          "audio_in_bytes": 64000,
+          "inbound_bytes": 324,
+          "inj_peak": 0.37796
+        },
+        {
+          "t_mono": 813371.829567375,
+          "t": 0.61,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 113,
+          "silent_frames": 113,
+          "frames_in": 107,
+          "bytes_up": 67200,
+          "input_peak": 32767,
+          "audio_in_bytes": 67200,
+          "inbound_bytes": 339,
+          "inj_peak": 0.6546
+        },
+        {
+          "t_mono": 813371.932196083,
+          "t": 0.72,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 118,
+          "silent_frames": 118,
+          "frames_in": 113,
+          "bytes_up": 70400,
+          "input_peak": 32767,
+          "audio_in_bytes": 70400,
+          "inbound_bytes": 354,
+          "inj_peak": 0.0257
+        },
+        {
+          "t_mono": 813372.035452791,
+          "t": 0.82,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 123,
+          "silent_frames": 123,
+          "frames_in": 118,
+          "bytes_up": 73600,
+          "input_peak": 32767,
+          "audio_in_bytes": 73600,
+          "inbound_bytes": 369,
+          "inj_peak": 0.56448
+        },
+        {
+          "t_mono": 813372.136801541,
+          "t": 0.92,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 128,
+          "silent_frames": 128,
+          "frames_in": 123,
+          "bytes_up": 76800,
+          "input_peak": 32767,
+          "audio_in_bytes": 76800,
+          "inbound_bytes": 384,
+          "inj_peak": 0.22454
+        },
+        {
+          "t_mono": 813372.238050916,
+          "t": 1.02,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 133,
+          "silent_frames": 133,
+          "frames_in": 129,
+          "bytes_up": 80000,
+          "input_peak": 32767,
+          "audio_in_bytes": 80000,
+          "inbound_bytes": 399,
+          "inj_peak": 0.26001
+        },
+        {
+          "t_mono": 813372.339920125,
+          "t": 1.12,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 138,
+          "silent_frames": 138,
+          "frames_in": 133,
+          "bytes_up": 83200,
+          "input_peak": 32767,
+          "audio_in_bytes": 83200,
+          "inbound_bytes": 414,
+          "inj_peak": 0.23691
+        },
+        {
+          "t_mono": 813372.442206458,
+          "t": 1.23,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 143,
+          "silent_frames": 143,
+          "frames_in": 138,
+          "bytes_up": 86400,
+          "input_peak": 32767,
+          "audio_in_bytes": 86400,
+          "inbound_bytes": 429,
+          "inj_peak": 0.43095
+        },
+        {
+          "t_mono": 813372.5451745,
+          "t": 1.33,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 148,
+          "silent_frames": 148,
+          "frames_in": 143,
+          "bytes_up": 89600,
+          "input_peak": 32767,
+          "audio_in_bytes": 89600,
+          "inbound_bytes": 444,
+          "inj_peak": 0.45094
+        },
+        {
+          "t_mono": 813372.648235625,
+          "t": 1.43,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 154,
+          "silent_frames": 154,
+          "frames_in": 148,
+          "bytes_up": 92800,
+          "input_peak": 32767,
+          "audio_in_bytes": 92800,
+          "inbound_bytes": 459,
+          "inj_peak": 0.09748
+        },
+        {
+          "t_mono": 813372.750040541,
+          "t": 1.53,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 159,
+          "silent_frames": 159,
+          "frames_in": 154,
+          "bytes_up": 96000,
+          "input_peak": 32767,
+          "audio_in_bytes": 96000,
+          "inbound_bytes": 477,
+          "inj_peak": 9e-05
+        },
+        {
+          "t_mono": 813372.852587875,
+          "t": 1.64,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 164,
+          "silent_frames": 164,
+          "frames_in": 159,
+          "bytes_up": 99200,
+          "input_peak": 32767,
+          "audio_in_bytes": 99200,
+          "inbound_bytes": 492,
+          "inj_peak": 0.0001
+        },
+        {
+          "t_mono": 813372.955712041,
+          "t": 1.74,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 169,
+          "silent_frames": 169,
+          "frames_in": 164,
+          "bytes_up": 102400,
+          "input_peak": 32767,
+          "audio_in_bytes": 102400,
+          "inbound_bytes": 507,
+          "inj_peak": 0.2674
+        },
+        {
+          "t_mono": 813373.057890625,
+          "t": 1.84,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 174,
+          "silent_frames": 174,
+          "frames_in": 169,
+          "bytes_up": 105600,
+          "input_peak": 32767,
+          "audio_in_bytes": 105600,
+          "inbound_bytes": 522,
+          "inj_peak": 0.54795
+        },
+        {
+          "t_mono": 813373.161857416,
+          "t": 1.95,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 179,
+          "silent_frames": 179,
+          "frames_in": 174,
+          "bytes_up": 108800,
+          "input_peak": 32767,
+          "audio_in_bytes": 108800,
+          "inbound_bytes": 537,
+          "inj_peak": 0.03245
+        },
+        {
+          "t_mono": 813373.265878375,
+          "t": 2.05,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 184,
+          "silent_frames": 184,
+          "frames_in": 179,
+          "bytes_up": 112000,
+          "input_peak": 32767,
+          "audio_in_bytes": 112000,
+          "inbound_bytes": 552,
+          "inj_peak": 0.44994
+        },
+        {
+          "t_mono": 813373.367730791,
+          "t": 2.15,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 190,
+          "silent_frames": 190,
+          "frames_in": 184,
+          "bytes_up": 115200,
+          "input_peak": 32767,
+          "audio_in_bytes": 115200,
+          "inbound_bytes": 567,
+          "inj_peak": 0.30134
+        },
+        {
+          "t_mono": 813373.469861666,
+          "t": 2.25,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 195,
+          "silent_frames": 195,
+          "frames_in": 190,
+          "bytes_up": 118400,
+          "input_peak": 32767,
+          "audio_in_bytes": 118400,
+          "inbound_bytes": 585,
+          "inj_peak": 0.23296
+        },
+        {
+          "t_mono": 813373.571676083,
+          "t": 2.36,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 200,
+          "silent_frames": 200,
+          "frames_in": 195,
+          "bytes_up": 121600,
+          "input_peak": 32767,
+          "audio_in_bytes": 121600,
+          "inbound_bytes": 600,
+          "inj_peak": 0.35935
+        },
+        {
+          "t_mono": 813373.673796916,
+          "t": 2.46,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 205,
+          "silent_frames": 205,
+          "frames_in": 200,
+          "bytes_up": 124800,
+          "input_peak": 32767,
+          "audio_in_bytes": 124800,
+          "inbound_bytes": 615,
+          "inj_peak": 0.2586
+        },
+        {
+          "t_mono": 813373.777342291,
+          "t": 2.56,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 210,
+          "silent_frames": 210,
+          "frames_in": 205,
+          "bytes_up": 128000,
+          "input_peak": 32767,
+          "audio_in_bytes": 128000,
+          "inbound_bytes": 630,
+          "inj_peak": 0.58927
+        },
+        {
+          "t_mono": 813373.882052833,
+          "t": 2.67,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 215,
+          "silent_frames": 215,
+          "frames_in": 210,
+          "bytes_up": 131200,
+          "input_peak": 32767,
+          "audio_in_bytes": 131200,
+          "inbound_bytes": 645,
+          "inj_peak": 0.30603
+        },
+        {
+          "t_mono": 813373.985595791,
+          "t": 2.77,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 220,
+          "silent_frames": 220,
+          "frames_in": 215,
+          "bytes_up": 134400,
+          "input_peak": 32767,
+          "audio_in_bytes": 134400,
+          "inbound_bytes": 660,
+          "inj_peak": 0.47043
+        },
+        {
+          "t_mono": 813374.089157583,
+          "t": 2.87,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 226,
+          "silent_frames": 226,
+          "frames_in": 221,
+          "bytes_up": 140800,
+          "input_peak": 32767,
+          "audio_in_bytes": 140800,
+          "inbound_bytes": 675,
+          "inj_peak": 0.56089
+        },
+        {
+          "t_mono": 813374.191216791,
+          "t": 2.98,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 231,
+          "silent_frames": 231,
+          "frames_in": 226,
+          "bytes_up": 144000,
+          "input_peak": 32767,
+          "audio_in_bytes": 144000,
+          "inbound_bytes": 693,
+          "inj_peak": 0.31223
+        },
+        {
+          "t_mono": 813374.294391375,
+          "t": 3.08,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 236,
+          "silent_frames": 236,
+          "frames_in": 231,
+          "bytes_up": 147200,
+          "input_peak": 32767,
+          "audio_in_bytes": 147200,
+          "inbound_bytes": 708,
+          "inj_peak": 0.28353
+        },
+        {
+          "t_mono": 813374.397256708,
+          "t": 3.18,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 241,
+          "silent_frames": 241,
+          "frames_in": 236,
+          "bytes_up": 150400,
+          "input_peak": 32767,
+          "audio_in_bytes": 150400,
+          "inbound_bytes": 723,
+          "inj_peak": 0.42313
+        },
+        {
+          "t_mono": 813374.500957791,
+          "t": 3.29,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 246,
+          "silent_frames": 246,
+          "frames_in": 241,
+          "bytes_up": 153600,
+          "input_peak": 32767,
+          "audio_in_bytes": 153600,
+          "inbound_bytes": 738,
+          "inj_peak": 0.15923
+        },
+        {
+          "t_mono": 813374.606864541,
+          "t": 3.39,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 251,
+          "silent_frames": 251,
+          "frames_in": 246,
+          "bytes_up": 156800,
+          "input_peak": 32767,
+          "audio_in_bytes": 156800,
+          "inbound_bytes": 753,
+          "inj_peak": 0.21915
+        },
+        {
+          "t_mono": 813374.7105085,
+          "t": 3.5,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 257,
+          "silent_frames": 257,
+          "frames_in": 251,
+          "bytes_up": 160000,
+          "input_peak": 32767,
+          "audio_in_bytes": 160000,
+          "inbound_bytes": 768,
+          "inj_peak": 0.36446
+        },
+        {
+          "t_mono": 813374.8138295,
+          "t": 3.6,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 262,
+          "silent_frames": 262,
+          "frames_in": 257,
+          "bytes_up": 163200,
+          "input_peak": 32767,
+          "audio_in_bytes": 163200,
+          "inbound_bytes": 786,
+          "inj_peak": 0.36751
+        },
+        {
+          "t_mono": 813374.918881291,
+          "t": 3.7,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 267,
+          "silent_frames": 267,
+          "frames_in": 262,
+          "bytes_up": 166400,
+          "input_peak": 32767,
+          "audio_in_bytes": 166400,
+          "inbound_bytes": 801,
+          "inj_peak": 0.31567
+        },
+        {
+          "t_mono": 813375.023450833,
+          "t": 3.81,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 272,
+          "silent_frames": 272,
+          "frames_in": 267,
+          "bytes_up": 169600,
+          "input_peak": 32767,
+          "audio_in_bytes": 169600,
+          "inbound_bytes": 816,
+          "inj_peak": 0.01218
+        },
+        {
+          "t_mono": 813375.128728,
+          "t": 3.91,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 277,
+          "silent_frames": 277,
+          "frames_in": 273,
+          "bytes_up": 172800,
+          "input_peak": 32767,
+          "audio_in_bytes": 172800,
+          "inbound_bytes": 831,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813375.231465291,
+          "t": 4.02,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 283,
+          "silent_frames": 283,
+          "frames_in": 278,
+          "bytes_up": 176000,
+          "input_peak": 32767,
+          "audio_in_bytes": 176000,
+          "inbound_bytes": 849,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813375.333991708,
+          "t": 4.12,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 288,
+          "silent_frames": 288,
+          "frames_in": 283,
+          "bytes_up": 179200,
+          "input_peak": 32767,
+          "audio_in_bytes": 179200,
+          "inbound_bytes": 864,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813375.437836708,
+          "t": 4.22,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 293,
+          "silent_frames": 293,
+          "frames_in": 288,
+          "bytes_up": 182400,
+          "input_peak": 32767,
+          "audio_in_bytes": 182400,
+          "inbound_bytes": 879,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813375.543521541,
+          "t": 4.33,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 298,
+          "silent_frames": 298,
+          "frames_in": 293,
+          "bytes_up": 185600,
+          "input_peak": 32767,
+          "audio_in_bytes": 185600,
+          "inbound_bytes": 894,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813375.647102583,
+          "t": 4.43,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 303,
+          "silent_frames": 303,
+          "frames_in": 298,
+          "bytes_up": 188800,
+          "input_peak": 32767,
+          "audio_in_bytes": 188800,
+          "inbound_bytes": 909,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813375.750102208,
+          "t": 4.53,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 309,
+          "silent_frames": 309,
+          "frames_in": 303,
+          "bytes_up": 192000,
+          "input_peak": 32767,
+          "audio_in_bytes": 192000,
+          "inbound_bytes": 927,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813375.851835875,
+          "t": 4.64,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 314,
+          "silent_frames": 314,
+          "frames_in": 309,
+          "bytes_up": 195200,
+          "input_peak": 32767,
+          "audio_in_bytes": 195200,
+          "inbound_bytes": 942,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813375.9546875,
+          "t": 4.74,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 319,
+          "silent_frames": 319,
+          "frames_in": 314,
+          "bytes_up": 198400,
+          "input_peak": 32767,
+          "audio_in_bytes": 198400,
+          "inbound_bytes": 957,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813376.056965625,
+          "t": 4.84,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 324,
+          "silent_frames": 324,
+          "frames_in": 319,
+          "bytes_up": 201600,
+          "input_peak": 32767,
+          "audio_in_bytes": 201600,
+          "inbound_bytes": 972,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813376.161905208,
+          "t": 4.95,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 329,
+          "silent_frames": 329,
+          "frames_in": 324,
+          "bytes_up": 204800,
+          "input_peak": 32767,
+          "audio_in_bytes": 204800,
+          "inbound_bytes": 987,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813376.265861,
+          "t": 5.05,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 334,
+          "silent_frames": 334,
+          "frames_in": 329,
+          "bytes_up": 208000,
+          "input_peak": 32767,
+          "audio_in_bytes": 208000,
+          "inbound_bytes": 1002,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813376.368692291,
+          "t": 5.15,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 340,
+          "silent_frames": 340,
+          "frames_in": 334,
+          "bytes_up": 211200,
+          "input_peak": 32767,
+          "audio_in_bytes": 211200,
+          "inbound_bytes": 1017,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813376.470938208,
+          "t": 5.26,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 345,
+          "silent_frames": 345,
+          "frames_in": 340,
+          "bytes_up": 214400,
+          "input_peak": 32767,
+          "audio_in_bytes": 214400,
+          "inbound_bytes": 1035,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813376.574306583,
+          "t": 5.36,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 350,
+          "silent_frames": 350,
+          "frames_in": 345,
+          "bytes_up": 217600,
+          "input_peak": 32767,
+          "audio_in_bytes": 217600,
+          "inbound_bytes": 1050,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813376.676539166,
+          "t": 5.46,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 355,
+          "silent_frames": 355,
+          "frames_in": 350,
+          "bytes_up": 220800,
+          "input_peak": 32767,
+          "audio_in_bytes": 220800,
+          "inbound_bytes": 1065,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813376.778652083,
+          "t": 5.56,
+          "responding": false,
+          "turns": 0,
+          "fed_bytes": 0,
+          "frames_out": 360,
+          "silent_frames": 360,
+          "frames_in": 356,
+          "bytes_up": 227200,
+          "input_peak": 32767,
+          "audio_in_bytes": 227200,
+          "inbound_bytes": 1080,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813376.883214958,
+          "t": 5.67,
+          "responding": true,
+          "turns": 1,
+          "fed_bytes": 0,
+          "frames_out": 365,
+          "silent_frames": 365,
+          "frames_in": 360,
+          "bytes_up": 227200,
+          "input_peak": 32767,
+          "audio_in_bytes": 227200,
+          "inbound_bytes": 1095,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813376.988542083,
+          "t": 5.77,
+          "responding": true,
+          "turns": 1,
+          "fed_bytes": 0,
+          "frames_out": 370,
+          "silent_frames": 370,
+          "frames_in": 365,
+          "bytes_up": 230400,
+          "input_peak": 32767,
+          "audio_in_bytes": 227200,
+          "inbound_bytes": 1110,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813377.091001583,
+          "t": 5.88,
+          "responding": true,
+          "turns": 1,
+          "fed_bytes": 38400,
+          "frames_out": 376,
+          "silent_frames": 374,
+          "frames_in": 370,
+          "bytes_up": 233600,
+          "input_peak": 32767,
+          "audio_in_bytes": 227200,
+          "inbound_bytes": 1527,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813377.193853291,
+          "t": 5.98,
+          "responding": true,
+          "turns": 1,
+          "fed_bytes": 76800,
+          "frames_out": 381,
+          "silent_frames": 374,
+          "frames_in": 376,
+          "bytes_up": 240000,
+          "input_peak": 32767,
+          "audio_in_bytes": 227200,
+          "inbound_bytes": 3811,
+          "inj_peak": 0
+        },
+        {
+          "t_mono": 813377.296712,
+          "t": 6.08,
+          "responding": false,
+          "turns": 1,
+          "fed_bytes": 172800,
+          "frames_out": 386,
+          "silent_frames": 374,
+          "frames_in": 381,
+          "bytes_up": 243200,
+          "input_peak": 32767,
+          "audio_in_bytes": 227200,
+          "inbound_bytes": 5335,
+          "inj_peak": 0
+        }
+      ]
+    },
+    "E": {
+      "idle_wait_s": 207.1,
+      "session_index_before": 1,
+      "session_index_after": 2,
+      "reconnected_at_s": 185.1,
+      "disconnect_events": [
+        {
+          "reason": "SessionDied: Your session was closed because no user input was received for 180 seconds.",
+          "failures": 1
+        }
+      ],
+      "idle_marks": [
+        {
+          "t": 0.0,
+          "sessions": 1,
+          "uptime_s": 7.8,
+          "conn": "connected",
+          "frames_out": 386
+        },
+        {
+          "t": 5.0,
+          "sessions": 1,
+          "uptime_s": 12.8,
+          "conn": "connected",
+          "frames_out": 636
+        },
+        {
+          "t": 10.0,
+          "sessions": 1,
+          "uptime_s": 17.8,
+          "conn": "connected",
+          "frames_out": 886
+        },
+        {
+          "t": 15.0,
+          "sessions": 1,
+          "uptime_s": 22.8,
+          "conn": "connected",
+          "frames_out": 1136
+        },
+        {
+          "t": 20.0,
+          "sessions": 1,
+          "uptime_s": 27.8,
+          "conn": "connected",
+          "frames_out": 1387
+        },
+        {
+          "t": 25.0,
+          "sessions": 1,
+          "uptime_s": 32.8,
+          "conn": "connected",
+          "frames_out": 1637
+        },
+        {
+          "t": 30.0,
+          "sessions": 1,
+          "uptime_s": 37.8,
+          "conn": "connected",
+          "frames_out": 1887
+        },
+        {
+          "t": 35.0,
+          "sessions": 1,
+          "uptime_s": 42.8,
+          "conn": "connected",
+          "frames_out": 2137
+        },
+        {
+          "t": 40.0,
+          "sessions": 1,
+          "uptime_s": 47.8,
+          "conn": "connected",
+          "frames_out": 2387
+        },
+        {
+          "t": 45.0,
+          "sessions": 1,
+          "uptime_s": 52.8,
+          "conn": "connected",
+          "frames_out": 2637
+        },
+        {
+          "t": 50.0,
+          "sessions": 1,
+          "uptime_s": 57.8,
+          "conn": "connected",
+          "frames_out": 2887
+        },
+        {
+          "t": 55.0,
+          "sessions": 1,
+          "uptime_s": 62.8,
+          "conn": "connected",
+          "frames_out": 3137
+        },
+        {
+          "t": 60.0,
+          "sessions": 1,
+          "uptime_s": 67.8,
+          "conn": "connected",
+          "frames_out": 3388
+        },
+        {
+          "t": 65.0,
+          "sessions": 1,
+          "uptime_s": 72.8,
+          "conn": "connected",
+          "frames_out": 3638
+        },
+        {
+          "t": 70.0,
+          "sessions": 1,
+          "uptime_s": 77.8,
+          "conn": "connected",
+          "frames_out": 3888
+        },
+        {
+          "t": 75.0,
+          "sessions": 1,
+          "uptime_s": 82.8,
+          "conn": "connected",
+          "frames_out": 4138
+        },
+        {
+          "t": 80.0,
+          "sessions": 1,
+          "uptime_s": 87.8,
+          "conn": "connected",
+          "frames_out": 4388
+        },
+        {
+          "t": 85.0,
+          "sessions": 1,
+          "uptime_s": 92.8,
+          "conn": "connected",
+          "frames_out": 4638
+        },
+        {
+          "t": 90.1,
+          "sessions": 1,
+          "uptime_s": 97.8,
+          "conn": "connected",
+          "frames_out": 4888
+        },
+        {
+          "t": 95.1,
+          "sessions": 1,
+          "uptime_s": 102.8,
+          "conn": "connected",
+          "frames_out": 5139
+        },
+        {
+          "t": 100.1,
+          "sessions": 1,
+          "uptime_s": 107.8,
+          "conn": "connected",
+          "frames_out": 5389
+        },
+        {
+          "t": 105.1,
+          "sessions": 1,
+          "uptime_s": 112.8,
+          "conn": "connected",
+          "frames_out": 5639
+        },
+        {
+          "t": 110.1,
+          "sessions": 1,
+          "uptime_s": 117.8,
+          "conn": "connected",
+          "frames_out": 5889
+        },
+        {
+          "t": 115.1,
+          "sessions": 1,
+          "uptime_s": 122.8,
+          "conn": "connected",
+          "frames_out": 6139
+        },
+        {
+          "t": 120.1,
+          "sessions": 1,
+          "uptime_s": 127.8,
+          "conn": "connected",
+          "frames_out": 6389
+        },
+        {
+          "t": 125.1,
+          "sessions": 1,
+          "uptime_s": 132.8,
+          "conn": "connected",
+          "frames_out": 6639
+        },
+        {
+          "t": 130.1,
+          "sessions": 1,
+          "uptime_s": 137.8,
+          "conn": "connected",
+          "frames_out": 6890
+        },
+        {
+          "t": 135.1,
+          "sessions": 1,
+          "uptime_s": 142.8,
+          "conn": "connected",
+          "frames_out": 7140
+        },
+        {
+          "t": 140.1,
+          "sessions": 1,
+          "uptime_s": 147.8,
+          "conn": "connected",
+          "frames_out": 7390
+        },
+        {
+          "t": 145.1,
+          "sessions": 1,
+          "uptime_s": 152.8,
+          "conn": "connected",
+          "frames_out": 7640
+        },
+        {
+          "t": 150.1,
+          "sessions": 1,
+          "uptime_s": 157.8,
+          "conn": "connected",
+          "frames_out": 7890
+        },
+        {
+          "t": 155.1,
+          "sessions": 1,
+          "uptime_s": 162.8,
+          "conn": "connected",
+          "frames_out": 8140
+        },
+        {
+          "t": 160.1,
+          "sessions": 1,
+          "uptime_s": 167.8,
+          "conn": "connected",
+          "frames_out": 8390
+        },
+        {
+          "t": 165.1,
+          "sessions": 1,
+          "uptime_s": 172.8,
+          "conn": "connected",
+          "frames_out": 8640
+        },
+        {
+          "t": 170.1,
+          "sessions": 1,
+          "uptime_s": 177.8,
+          "conn": "connected",
+          "frames_out": 8891
+        },
+        {
+          "t": 175.1,
+          "sessions": 1,
+          "uptime_s": 182.8,
+          "conn": "connected",
+          "frames_out": 9141
+        },
+        {
+          "t": 180.1,
+          "sessions": 1,
+          "uptime_s": 187.8,
+          "conn": "connected",
+          "frames_out": 9391
+        },
+        {
+          "t": 185.1,
+          "sessions": 2,
+          "uptime_s": 192.8,
+          "conn": "connected",
+          "frames_out": 9641
+        },
+        {
+          "t": 190.1,
+          "sessions": 2,
+          "uptime_s": 197.9,
+          "conn": "connected",
+          "frames_out": 9891
+        },
+        {
+          "t": 195.1,
+          "sessions": 2,
+          "uptime_s": 202.9,
+          "conn": "connected",
+          "frames_out": 10141
+        }
+      ],
+      "pc_connected_all_idle": true,
+      "uptime_before_s": 7.8,
+      "uptime_after_s": 214.9,
+      "recovered": true,
+      "recovery_wait_s": 7.0,
+      "recovered_user_transcript": "안녕 하 세요, 오늘 기 분이 어떠 신가요？짧 게 한 문장 으로 인사 해 주세요. ",
+      "recovered_assistant_transcript": "안녕하세요, 오늘도 차분하게 일할 준비가 되어 있습니다.",
+      "usage": {
+        "audio_in_bytes": 448000,
+        "audio_out_bytes": 172800,
+        "responses": 2,
+        "started_at": 1789410094.23506,
+        "voice": "longanlingxin",
+        "tokens_in": 538,
+        "tokens_out": 61,
+        "tokens_audio_in": 67,
+        "tokens_total": 599,
+        "tool_calls": 0,
+        "sessions": 2,
+        "dropped_in_chunks": 0
+      },
+      "track": {
+        "frames_out": 10742,
+        "silent_frames": 10705,
+        "underruns": 10705,
+        "flushes": 3,
+        "fed_bytes": 172800,
+        "resample_samples_out": 172768,
+        "dropped_bytes": 274496,
+        "buffered_bytes": 0,
+        "pts_jumps": 0,
+        "sample_rate": 48000,
+        "frame_samples": 960,
+        "pace_late_ms_max": 0.0
+      }
+    },
+    "F": {
+      "uptime_s": 214.9,
+      "pc_state": {
+        "conn": "connected",
+        "ice": "connected"
+      },
+      "turns": 2,
+      "usage": {
+        "audio_in_bytes": 448000,
+        "audio_out_bytes": 172800,
+        "responses": 2,
+        "started_at": 1789410094.23506,
+        "voice": "longanlingxin",
+        "tokens_in": 538,
+        "tokens_out": 61,
+        "tokens_audio_in": 67,
+        "tokens_total": 599,
+        "tool_calls": 0,
+        "sessions": 2,
+        "dropped_in_chunks": 0
+      },
+      "track": {
+        "frames_out": 10742,
+        "silent_frames": 10705,
+        "underruns": 10705,
+        "flushes": 3,
+        "fed_bytes": 172800,
+        "resample_samples_out": 172768,
+        "dropped_bytes": 274496,
+        "buffered_bytes": 0,
+        "pts_jumps": 0,
+        "sample_rate": 48000,
+        "frame_samples": 960,
+        "pace_late_ms_max": 0.0
+      },
+      "adapter": {
+        "frames_in": 732,
+        "stereo_frames": 732,
+        "mono_frames": 0,
+        "up_chunks": 146,
+        "up_bytes": 467200,
+        "up_chunk_bytes": 3200,
+        "input_peak": 32767,
+        "queued_chunks": 0,
+        "track_ended": false,
+        "reader_error": null,
+        "downmix_comp_db": 3.0,
+        "resample_in_samples": 702720,
+        "resample_out_samples": 234224
+      },
+      "browser_inbound": {
+        "bytesReceived": 41471,
+        "packetsReceived": 10742,
+        "jitter": 0.001,
+        "audioLevel": 0
+      },
+      "event_kinds": {
+        "state": 6,
+        "speech_started": 2,
+        "response_started": 2,
+        "user_transcript": 1,
+        "assistant_transcript": 1,
+        "response_done": 1,
+        "error": 1,
+        "disconnected": 1,
+        "connected": 1
+      },
+      "event_log": [
+        {
+          "kind": "state",
+          "t_rel": 0.0,
+          "payload": {
+            "state": "listening"
+          }
+        },
+        {
+          "kind": "speech_started",
+          "t_rel": 0.0,
+          "payload": {}
+        },
+        {
+          "kind": "state",
+          "t_rel": 6.185,
+          "payload": {
+            "state": "thinking"
+          }
+        },
+        {
+          "kind": "response_started",
+          "t_rel": 6.185,
+          "payload": {
+            "turn": 1
+          }
+        },
+        {
+          "kind": "state",
+          "t_rel": 6.381,
+          "payload": {
+            "state": "speaking"
+          }
+        },
+        {
+          "kind": "user_transcript",
+          "t_rel": 6.569,
+          "payload": {
+            "text": "안녕 하 세요, 오늘 기 분이 어떠 신가요？짧 게 한 문장 으로 인사 해 주세요. "
+          }
+        },
+        {
+          "kind": "assistant_transcript",
+          "t_rel": 6.604,
+          "payload": {
+            "text": "안녕하세요, 오늘도 차분하게 일할 준비가 되어 있습니다."
+          }
+        },
+        {
+          "kind": "state",
+          "t_rel": 6.605,
+          "payload": {
+            "state": "idle"
+          }
+        },
+        {
+          "kind": "response_done",
+          "t_rel": 6.605,
+          "payload": {
+            "turn": 1
+          }
+        },
+        {
+          "kind": "error",
+          "t_rel": 186.303,
+          "payload": {
+            "code": "user_idle_timeout",
+            "message": "Your session was closed because no user input was received for 180 seconds."
+          }
+        },
+        {
+          "kind": "disconnected",
+          "t_rel": 186.304,
+          "payload": {
+            "reason": "SessionDied: Your session was closed because no user input was received for 180 seconds.",
+            "failures": 1,
+            "retry_in": 3.0
+          }
+        },
+        {
+          "kind": "connected",
+          "t_rel": 189.646,
+          "payload": {
+            "session": 2,
+            "voice": "longanlingxin"
+          }
+        },
+        {
+          "kind": "state",
+          "t_rel": 207.527,
+          "payload": {
+            "state": "listening"
+          }
+        },
+        {
+          "kind": "speech_started",
+          "t_rel": 207.527,
+          "payload": {}
+        },
+        {
+          "kind": "state",
+          "t_rel": 213.612,
+          "payload": {
+            "state": "thinking"
+          }
+        },
+        {
+          "kind": "response_started",
+          "t_rel": 213.612,
+          "payload": {
+            "turn": 2
+          }
+        }
+      ]
+    },
+    "D": {
+      "real_voice_barge_in": {
+        "flushes": 1,
+        "dropped_bytes": 0,
+        "buffered_bytes": 0,
+        "at_s": 0.2,
+        "responding_at_flush": false
+      },
+      "ai_spoke_at_least_once": false,
+      "synthetic_flush_path": {
+        "responding_before": false,
+        "buffered_before": 0,
+        "flushes_delta": 1,
+        "dropped_bytes_delta": 0,
+        "buffered_after": 0,
+        "speech_started_events_delta": 1
+      },
+      "turns_before": 0,
+      "turns_after": 1,
+      "transcripts": {
+        "user": "헤르메스 야 날씨 가 참 좋 은데 오늘 기 분이 어떤지 2 문장 으로 말씀 해 주세요. ",
+        "assistant": "기분은 차분하고 안정적입니다. 오늘 날씨처럼 상쾌한 상태로 업무를 수행하겠습니다."
+      },
+      "track_final": {
+        "frames_out": 438,
+        "silent_frames": 364,
+        "underruns": 364,
+        "flushes": 2,
+        "fed_bytes": 295680,
+        "resample_samples_out": 295648,
+        "dropped_bytes": 439616,
+        "buffered_bytes": 9600,
+        "pts_jumps": 0,
+        "sample_rate": 48000,
+        "frame_samples": 960,
+        "pace_late_ms_max": 0.0
+      },
+      "usage": {
+        "audio_in_bytes": 233600,
+        "audio_out_bytes": 295680,
+        "responses": 1,
+        "started_at": 1789410322.262486,
+        "voice": "longanlingxin",
+        "tokens_in": 541,
+        "tokens_out": 97,
+        "tokens_audio_in": 70,
+        "tokens_total": 638,
+        "tool_calls": 0,
+        "sessions": 1,
+        "dropped_in_chunks": 0
+      },
+      "event_kinds": {
+        "state": 4,
+        "speech_started": 2,
+        "response_started": 1,
+        "user_transcript": 1,
+        "assistant_transcript": 1,
+        "response_done": 1
+      },
+      "event_log": [
+        {
+          "kind": "state",
+          "t_rel": 0.0,
+          "payload": {
+            "state": "listening"
+          }
+        },
+        {
+          "kind": "speech_started",
+          "t_rel": 0.0,
+          "payload": {}
+        },
+        {
+          "kind": "speech_started",
+          "t_rel": 0.05,
+          "payload": {}
+        },
+        {
+          "kind": "state",
+          "t_rel": 5.511,
+          "payload": {
+            "state": "thinking"
+          }
+        },
+        {
+          "kind": "response_started",
+          "t_rel": 5.511,
+          "payload": {
+            "turn": 1
+          }
+        },
+        {
+          "kind": "state",
+          "t_rel": 5.699,
+          "payload": {
+            "state": "speaking"
+          }
+        },
+        {
+          "kind": "user_transcript",
+          "t_rel": 5.74,
+          "payload": {
+            "text": "헤르메스 야 날씨 가 참 좋 은데 오늘 기 분이 어떤지 2 문장 으로 말씀 해 주세요. "
+          }
+        },
+        {
+          "kind": "assistant_transcript",
+          "t_rel": 6.771,
+          "payload": {
+            "text": "기분은 차분하고 안정적입니다. 오늘 날씨처럼 상쾌한 상태로 업무를 수행하겠습니다."
+          }
+        },
+        {
+          "kind": "state",
+          "t_rel": 6.771,
+          "payload": {
+            "state": "idle"
+          }
+        },
+        {
+          "kind": "response_done",
+          "t_rel": 6.771,
+          "payload": {
+            "turn": 1
+          }
+        }
+      ]
+    }
+  },
+  "connect_s": 10.53,
+  "hangup": {
+    "alive_after": false,
+    "close_reason": "api hangup",
+    "phase": "ended"
+  },
+  "connect_s_b": 10.52,
+  "hangup_b": {
+    "alive_after": false
+  },
+  "checks": {
+    "[A] 주입 음성 비무음 (peak>0.05)": true,
+    "[A] 업링크 실음성 도달 (peak>500)": true,
+    "[A] 사용자 발화 한국어 전사 도착": true,
+    "[A] AI 음성 응답 전사 도착": true,
+    "[A] 다운링크 실오디오 브라우저 수신": true,
+    "[B] WebRTC RTT 측정 (<100ms)": true,
+    "[B] response_started→서버 첫 오디오 (<600ms)": true,
+    "[B] 서버 첫 오디오→브라우저 도달 (<600ms)": true,
+    "[C] 에코 게이트: 발화 중 코어 유입 0B": true,
+    "[C] 무음 프레임 방출 (RTP 유지)": true,
+    "[C] PTS 연속 (pts_jumps==0)": true,
+    "[D] 끼어들기 flush 발생": true,
+    "[D] 끼어들기 시 송출 버퍼 폐기": true,
+    "[D] 끼어들기 후 대화 재개": true,
+    "[E] 180s+ 유휴 후 세션 재연결 감지": true,
+    "[E] 유휴 중 PeerConnection 연결 유지": true,
+    "[E] 복구 후 정상 왕복 (새 응답)": true,
+    "[F] 장기 통화 uptime > 180s": true,
+    "[F] PeerConnection connected 유지": true,
+    "[F] hangup 후 서버 세션 정리": true
+  },
+  "passed": true
+}

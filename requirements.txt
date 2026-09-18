@@ -1,0 +1,10 @@
+# hermes-webrtc-bridge — M0 기반 환경 (verified 2026-09-14, py3.11.16 / macOS 26.6.2 arm64)
+# Install: /Users/shinsamkyun/hermes-webrtc-bridge/.venv/bin/python -m pip install --only-binary=:all: -r requirements.txt
+# NOTE: --only-binary=:all: 필수 — 홈브루 ffmpeg 9.0 이 설치돼 있으면 av 소스 빌드가 실패한다
+#       (AVFMT_ALLOW_FLUSH undeclared). 휠을 쓰면 번들 FFmpeg을 사용하므로 무관.
+av>=17,<18
+aiortc>=1.15,<2
+fastapi>=0.141,<1
+uvicorn[standard]>=0.53,<1
+soxr>=1.1,<2
+numpy>=2.4,<3

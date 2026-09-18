@@ -1,0 +1,90 @@
+[
+  {
+    "seconds": 3.01,
+    "peak": 0,
+    "rms": 0,
+    "analyserFrames": 183,
+    "ctxState": "running",
+    "sampleRate": 44100,
+    "settings": {
+      "autoGainControl": false,
+      "channelCount": 2,
+      "deviceId": "default",
+      "echoCancellation": false,
+      "groupId": "ec724e13e717bd89acae8f171608a79e5bd777a622fc4fcda04639bf531c4775",
+      "latency": 0.01,
+      "noiseSuppression": false,
+      "sampleRate": 44100,
+      "sampleSize": 16,
+      "voiceIsolation": false
+    },
+    "label": "Fake Default Audio Input",
+    "case": "ffmpeg 48k mono (현 하네스 포맷)"
+  },
+  {
+    "seconds": 3,
+    "peak": 0,
+    "rms": 0,
+    "analyserFrames": 183,
+    "ctxState": "running",
+    "sampleRate": 44100,
+    "settings": {
+      "autoGainControl": false,
+      "channelCount": 2,
+      "deviceId": "default",
+      "echoCancellation": false,
+      "groupId": "58142b7753ec8d08c5aa1e896b3bd8eae1585e07caa34f95253e7982ef5a0c5c",
+      "latency": 0.01,
+      "noiseSuppression": false,
+      "sampleRate": 44100,
+      "sampleSize": 16,
+      "voiceIsolation": false
+    },
+    "label": "Fake Default Audio Input",
+    "case": "python wave 48k mono"
+  },
+  {
+    "seconds": 3.02,
+    "peak": 0,
+    "rms": 0,
+    "analyserFrames": 183,
+    "ctxState": "running",
+    "sampleRate": 44100,
+    "settings": {
+      "autoGainControl": false,
+      "channelCount": 2,
+      "deviceId": "default",
+      "echoCancellation": false,
+      "groupId": "0a4d5dbe8cb10dd8699458883994b3163301688d9bb60d6260d8e5db5b0ed740",
+      "latency": 0.01,
+      "noiseSuppression": false,
+      "sampleRate": 44100,
+      "sampleSize": 16,
+      "voiceIsolation": false
+    },
+    "label": "Fake Default Audio Input",
+    "case": "python wave 44.1k stereo"
+  },
+  {
+    "seconds": 3.02,
+    "peak": 0,
+    "rms": 0,
+    "analyserFrames": 183,
+    "ctxState": "running",
+    "sampleRate": 44100,
+    "settings": {
+      "autoGainControl": false,
+      "channelCount": 2,
+      "deviceId": "default",
+      "echoCancellation": false,
+      "groupId": "1960139d07297b8cdfc181abeb91dcf09107530f2c6f451eccaf8055472bc925",
+      "latency": 0.01,
+      "noiseSuppression": false,
+      "sampleRate": 44100,
+      "sampleSize": 16,
+      "voiceIsolation": false
+    },
+    "label": "Fake Default Audio Input",
+    "case": "python wave 48k stereo"
+  }
+]

@@ -1,0 +1,111 @@
+{
+  "stages": {
+    "devtools_target": {
+      "type": "page",
+      "url": "http://127.0.0.1:8124/?token=m3-e2e-token"
+    },
+    "page_ready": true,
+    "secure_context": true,
+    "has_media_devices": true,
+    "connect_s": 10.52,
+    "phase_after_click": "live",
+    "uplink_wait_s": 0.0,
+    "server_frames_in": 13,
+    "assistant_render_s": 2.01,
+    "downlink_wait_s": 0.0,
+    "screenshot": "/Users/shinsamkyun/hermes-webrtc-bridge/out/m3_browser_screenshot.png",
+    "phase_after_hangup": "ended"
+  },
+  "dom": {
+    "title": "Hermes 음성 통화 (WebRTC)",
+    "start_label": "통화 시작",
+    "initial_state": "대기",
+    "external_resources": [],
+    "state_pill": "통화 중",
+    "banner": "",
+    "rtt": "10044ms",
+    "conn_info": "pc=connected",
+    "assistant_bubbles": "HermesOne moment, checking that for you.",
+    "bubbles": [
+      {
+        "k": "system",
+        "t": "시스템이벤트 채널 연결됨"
+      },
+      {
+        "k": "system",
+        "t": "시스템통화가 연결되었습니다. (세션 #1, voice=longanlingxin)"
+      },
+      {
+        "k": "user",
+        "t": "나 (타이핑)오늘 반도체 시장 상황을 한 문장으로 알려줘"
+      },
+      {
+        "k": "assistant",
+        "t": "HermesOne moment, checking that for you."
+      }
+    ],
+    "vad_state": "듣는 중",
+    "turns": "1",
+    "tokens": "509",
+    "event_count": "9",
+    "mic_level": "0.00",
+    "ai_level": "0.00",
+    "viz_mode": "canvas",
+    "state_pill_after_hangup": "종료"
+  },
+  "stats": {
+    "inbound": {
+      "bytesReceived": 6866,
+      "packetsReceived": 118,
+      "jitter": 0,
+      "audioLevel": 0.14477980895413067
+    },
+    "outbound": {
+      "bytesSent": 4650,
+      "packetsSent": 118
+    }
+  },
+  "events": [],
+  "server_status_before_hangup": {
+    "alive": true,
+    "turns": 1,
+    "usage": {
+      "audio_in_bytes": 115200,
+      "audio_out_bytes": 88320,
+      "responses": 1,
+      "started_at": 1789407082.830206,
+      "voice": "longanlingxin",
+      "tokens_in": 478,
+      "tokens_out": 31,
+      "tokens_audio_in": 0,
+      "tokens_total": 509,
+      "tool_calls": 0,
+      "sessions": 1,
+      "dropped_in_chunks": 0
+    },
+    "transcripts": {
+      "user": "",
+      "assistant": "One moment, checking that for you."
+    },
+    "frames_in": 280,
+    "silent_frames": 248
+  },
+  "after_hangup": {
+    "alive": false,
+    "last_close_reason": "api hangup"
+  },
+  "checks": {
+    "페이지 로드 + __bridge 훅": true,
+    "단일 파일 SPA (외부 리소스 0)": true,
+    "시작 상태 라벨 = 대기": true,
+    "버튼 원클릭 → 통화 연결(live)": true,
+    "상태 필 '통화 중'": true,
+    "업링크: 브라우저 마이크 → 서버 프레임": true,
+    "다운링크: 브라우저 오디오 수신(bytes>0)": true,
+    "통화 종료 → 시작 버튼 복귀": true,
+    "hangup 후 서버 세션 정리": true,
+    "자막: AI 답변 DOM 렌더": true,
+    "턴/토큰 카운터 갱신": true
+  },
+  "passed": true
+}

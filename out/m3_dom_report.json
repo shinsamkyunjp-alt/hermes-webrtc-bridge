@@ -1,0 +1,263 @@
+{
+  "total": 58,
+  "pass": 58,
+  "fail": 0,
+  "results": [
+    {
+      "name": "초기 상태 라벨 = '대기'",
+      "pass": true,
+      "detail": "대기"
+    },
+    {
+      "name": "통화 시작 버튼 활성",
+      "pass": true
+    },
+    {
+      "name": "통화 종료 버튼 비활성",
+      "pass": true
+    },
+    {
+      "name": "URL ?token= → localStorage 저장",
+      "pass": true,
+      "detail": "test-token"
+    },
+    {
+      "name": "자막 비었을 때 안내문 노출",
+      "pass": true
+    },
+    {
+      "name": "테스트 훅 window.__bridge 존재",
+      "pass": true
+    },
+    {
+      "name": "getUserMedia audio.echoCancellation = true",
+      "pass": true,
+      "detail": "{\"echoCancellation\":true,\"noiseSuppression\":true,\"autoGainControl\":true}"
+    },
+    {
+      "name": "getUserMedia audio.noiseSuppression = true",
+      "pass": true
+    },
+    {
+      "name": "getUserMedia audio.autoGainControl = true",
+      "pass": true
+    },
+    {
+      "name": "getUserMedia video 요청 없음",
+      "pass": true
+    },
+    {
+      "name": "RTCPeerConnection 1회 생성",
+      "pass": true
+    },
+    {
+      "name": "DataChannel 'events' 생성",
+      "pass": true
+    },
+    {
+      "name": "오퍼 SDP에 m=application 포함 (DC 선협상)",
+      "pass": true
+    },
+    {
+      "name": "POST /api/offer 호출 + 마이크 트랙 등록",
+      "pass": true
+    },
+    {
+      "name": "Authorization: Bearer 토큰 헤더 전송",
+      "pass": true,
+      "detail": "Bearer test-token"
+    },
+    {
+      "name": "Answer 적용 (remoteDescription=answer)",
+      "pass": true
+    },
+    {
+      "name": "Screen WakeLock 요청",
+      "pass": true,
+      "detail": "wakeLock=1"
+    },
+    {
+      "name": "연결 후 상태 = 'live'",
+      "pass": true,
+      "detail": "live"
+    },
+    {
+      "name": "연결 후 종료 버튼 활성",
+      "pass": true
+    },
+    {
+      "name": "연결 RTT 표시",
+      "pass": true,
+      "detail": "0ms"
+    },
+    {
+      "name": "mode/voice 필 표시",
+      "pass": true,
+      "detail": "speaker/longanlingxin"
+    },
+    {
+      "name": "사용자 자막 말풍선 렌더",
+      "pass": true
+    },
+    {
+      "name": "AI 자막 스트리밍 교체(중복 말풍선 없음)",
+      "pass": true,
+      "detail": "assistant bubbles=1"
+    },
+    {
+      "name": "에이전트 위임/결과 말풍선",
+      "pass": true,
+      "detail": "tool=2"
+    },
+    {
+      "name": "주변음 자막 말풍선",
+      "pass": true
+    },
+    {
+      "name": "토큰 사용량 표시(636)",
+      "pass": true,
+      "detail": "636"
+    },
+    {
+      "name": "턴 카운터 = 1",
+      "pass": true,
+      "detail": "1"
+    },
+    {
+      "name": "이벤트 카운터 집계",
+      "pass": true,
+      "detail": "11"
+    },
+    {
+      "name": "미지 이벤트 무시(크래시 없음)",
+      "pass": true
+    },
+    {
+      "name": "/api/status 폴링 — 업타임/턴 반영",
+      "pass": true,
+      "detail": "uptime=12s"
+    },
+    {
+      "name": "getStats 인바운드 오디오 집계",
+      "pass": true,
+      "detail": "{\"inbound\":{\"bytesReceived\":424242,\"packetsReceived\":1234,\"jitter\":0.004,\"audioLevel\":0.12},\"outbound\":{\"bytesSent\":99999,\"packetsSent\":555}}"
+    },
+    {
+      "name": "음소거 — 마이크 트랙 enabled=false",
+      "pass": true
+    },
+    {
+      "name": "음소거 — 버튼 라 '음소거 해제'",
+      "pass": true,
+      "detail": "음소거 해제"
+    },
+    {
+      "name": "음소거 — 상태 필 '통화 중 (음소거)'",
+      "pass": true,
+      "detail": "통화 중 (음소거)"
+    },
+    {
+      "name": "음소거 해제 — 트랙 복귀",
+      "pass": true
+    },
+    {
+      "name": "타이 입력 → DataChannel cmd=text",
+      "pass": true,
+      "detail": "[{\"cmd\":\"text\",\"text\":\"짧게 인사해줘\"}]"
+    },
+    {
+      "name": "타이 입력 말풍선 표시",
+      "pass": true
+    },
+    {
+      "name": "POST /api/hangup 호출",
+      "pass": true
+    },
+    {
+      "name": "PeerConnection close 호출",
+      "pass": true
+    },
+    {
+      "name": "마이크 트랙 stop 호출",
+      "pass": true
+    },
+    {
+      "name": "WakeLock 해제",
+      "pass": true,
+      "detail": "released=1"
+    },
+    {
+      "name": "종료 후 상태 = 'ended'",
+      "pass": true,
+      "detail": "ended"
+    },
+    {
+      "name": "종료 후 시작 버튼 재활성",
+      "pass": true
+    },
+    {
+      "name": "마이크 거부 → 상태 'error'",
+      "pass": true,
+      "detail": "error"
+    },
+    {
+      "name": "마이크 거부 → 배너에 안내문",
+      "pass": true,
+      "detail": "마이크 접근 실패: Permission denied — HTTPS(또는 localhos"
+    },
+    {
+      "name": "마이크 거부 → PeerConnection 생성 안 함",
+      "pass": true
+    },
+    {
+      "name": "401 → 상태 'error' (인증 실패 배너)",
+      "pass": true,
+      "detail": "phase=error banner=통화 연결 실패: 인증 실패(401) — 토큰을 확인하세요 (?token=...)"
+    },
+    {
+      "name": "viewport meta (모바일 스케일)",
+      "pass": true
+    },
+    {
+      "name": "safe-area 인셋 적용",
+      "pass": true
+    },
+    {
+      "name": "getUserMedia AEC/NS/AGC",
+      "pass": true
+    },
+    {
+      "name": "Screen WakeLock 요청",
+      "pass": true
+    },
+    {
+      "name": "AudioContext unlock (resume)",
+      "pass": true
+    },
+    {
+      "name": "DataChannel events 생성",
+      "pass": true
+    },
+    {
+      "name": "HTTPS(secure context) 경고",
+      "pass": true
+    },
+    {
+      "name": "외부 스크립트/스타일 의존 없음",
+      "pass": true,
+      "detail": "외부 리소스 0"
+    },
+    {
+      "name": "자막 스크롤 영역",
+      "pass": true
+    },
+    {
+      "name": "통화 종료 시 hangup API",
+      "pass": true
+    },
+    {
+      "name": "단일 파일(빌드 산출물 없음)",
+      "pass": true
+    }
+  ]
+}
