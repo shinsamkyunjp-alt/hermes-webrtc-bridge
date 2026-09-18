@@ -21,8 +21,10 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import collections
 import json
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -186,9 +188,9 @@ class QwenRealtimeSession:
         self.responding = False
         self.last_play_end = 0.0
 
-        # 에이전트 브리지: 음성 대화당 에이전트 세션 1개를 이어붙여 락 유지
         self.agent_session_id: str | None = None
-        self.events: list[tuple[str, dict]] = []  # (kind, payload) 전체 이력 (회 검증용)
+        self._current_agent_proc: asyncio.subprocess.Process | None = None
+        self.events: collections.deque[tuple[str, dict]] = collections.deque(maxlen=1000)  # (kind, payload) 이력 (메모리 누수 방지 maxlen=1000)
 
         self._ws: Any = None
         self._send_lock = asyncio.Lock()
@@ -323,9 +325,40 @@ class QwenRealtimeSession:
         self.log("AUDIO_FLUSH", {"dropped_chunks": dropped})
 
     # -------------------------------------------------------- agent bridge
-    def _run_agent_sync(self, task: str) -> str:
-        """hermes chat 원샷 모드로 실제 에이전트 실행 (음성 대화당 세션 1개로 --resume 유지)."""
+    async def _terminate_agent_proc(self, proc: asyncio.subprocess.Process) -> None:
+        """Process group 단위로 안전하게 SIGTERM → SIGKILL 처리 (고아 프로세스 방지)."""
+        if proc.returncode is not None:
+            return
+        try:
+            pgid = os.getpgid(proc.pid)
+            os.killpg(pgid, signal.SIGTERM)
+        except (ProcessLookupError, PermissionError):
+            try:
+                proc.terminate()
+            except ProcessLookupError:
+                pass
+
+        try:
+            await asyncio.wait_for(proc.wait(), timeout=2.0)
+        except (asyncio.TimeoutError, Exception):
+            try:
+                pgid = os.getpgid(proc.pid)
+                os.killpg(pgid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
+                try:
+                    proc.kill()
+                except ProcessLookupError:
+                    pass
+            try:
+                await asyncio.wait_for(proc.wait(), timeout=1.0)
+            except Exception:
+                pass
+
+    async def _run_agent(self, task: str) -> str:
+        """hermes chat 원샷 모드로 실제 에이전트 비동기 실행 (세션 resume 및 프로세스 그룹 관리)."""
         if self._agent_runner is not None:  # 테스트 주입
+            if asyncio.iscoroutinefunction(self._agent_runner):
+                return await self._agent_runner(task)
             return self._agent_runner(task)
         hermes_home = os.environ.get("HERMES_HOME") or os.path.expanduser("~/.hermes")
         venv_py = os.path.join(hermes_home, "hermes-agent", "venv", "bin", "python")
@@ -335,19 +368,31 @@ class QwenRealtimeSession:
         if self.agent_session_id:
             cmd += ["--resume", self.agent_session_id]
         env = {**os.environ, "HERMES_HOME": hermes_home, "NO_COLOR": "1", "TERM": "dumb"}
+
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=str(os.path.expanduser("~")),
+            env=env,
+            start_new_session=True,
+        )
+        self._current_agent_proc = proc
         try:
-            proc = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
+            stdout_bytes, stderr_bytes = await asyncio.wait_for(
+                proc.communicate(),
                 timeout=AGENT_TIMEOUT + 30,
-                cwd=str(os.path.expanduser("~")),
-                env=env,
             )
-        except subprocess.TimeoutExpired as exc:
+            out = (stdout_bytes.decode(errors="replace") if stdout_bytes else "").strip()
+            err = (stderr_bytes.decode(errors="replace") if stderr_bytes else "").strip()
+        except (asyncio.TimeoutError, asyncio.CancelledError) as exc:
+            await self._terminate_agent_proc(proc)
+            if isinstance(exc, asyncio.CancelledError):
+                raise
             raise asyncio.TimeoutError() from exc
-        out = (proc.stdout or "").strip()
-        err = (proc.stderr or "").strip()
+        finally:
+            if self._current_agent_proc is proc:
+                self._current_agent_proc = None
 
         new_sid = None
         for stream in (out, err):
@@ -374,8 +419,14 @@ class QwenRealtimeSession:
             answer = _clean(err)[-1000:] or "에이전트가 결과를 반환하지 않았습니다."
         if self.agent_session_id and ("not found" in answer.lower() or "존재하지 않" in answer):
             self.agent_session_id = None
-            return self._run_agent_sync(task)
+            return await self._run_agent(task)
         return answer
+
+    def _run_agent_sync(self, task: str) -> str:
+        """(하위 호환용 동기 래퍼)."""
+        if self._agent_runner is not None:  # 테스트 주입
+            return self._agent_runner(task)
+        return asyncio.run(self._run_agent(task))
 
     async def handle_function_call(self, call_id: str, name: str, args_str: str) -> None:
         """delegate_to_agent → 헤르메스 실행 → 결과 회신 → 음성 응답 트리거 (시퀀스 보존)."""
@@ -389,10 +440,13 @@ class QwenRealtimeSession:
         self.log("AGENT_DELEGATE", {"call_id": call_id, "task": task})
         try:
             result = await asyncio.wait_for(
-                asyncio.to_thread(self._run_agent_sync, task), timeout=AGENT_TIMEOUT
+                self._run_agent(task), timeout=AGENT_TIMEOUT
             )
         except asyncio.TimeoutError:
             result = f"에이전트 작업이 {AGENT_TIMEOUT}초 안에 끝나지 않았습니다."
+            if self._current_agent_proc is not None:
+                await self._terminate_agent_proc(self._current_agent_proc)
+                self._current_agent_proc = None
         except Exception as exc:  # noqa: BLE001
             result = f"에이전트 실행 오류: {exc}"
         if len(result) > 4000:
@@ -558,8 +612,12 @@ class QwenRealtimeSession:
         await self.emit("closed", {})
 
     async def close(self) -> None:
-        """세션 안전 종료: WS close + 오디오 스트림 센티 (리소스 누수 방지)."""
+        """세션 안전 종료: WS close + 오디오 스트림 센티넬 + 실행 중인 Agent 서브프로세스 정리."""
         self._closing = True
+        proc = self._current_agent_proc
+        self._current_agent_proc = None
+        if proc is not None:
+            await self._terminate_agent_proc(proc)
         ws, self._ws = self._ws, None
         if ws is not None:
             try:

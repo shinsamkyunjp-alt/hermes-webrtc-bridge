@@ -43,8 +43,8 @@
   --mic:.0; --ai:.0;
 }
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html,body{ margin:0; height:100%; background:var(--void); color:var(--fg);
-  font:15px/1.5 var(--sans); -webkit-font-smoothing:antialiased; }
+html,body{ margin:0; min-height:100dvh; background:var(--void); color:var(--fg);
+  font:15px/1.5 var(--sans); -webkit-font-smoothing:antialiased; overflow-x:hidden; }
 body{ display:flex; flex-direction:column; min-height:100dvh; position:relative;
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
 /* 보이드 글로우 + 비네트 + 스라인 (고정 레이어, 스크롤 컨테이너에 필터 금지) */
@@ -74,14 +74,22 @@ header h1::before{ content:""; width:11px; height:11px; border-radius:50%;
 .pill.err{ color:var(--alert); border-color:var(--alert); background:rgba(240,180,100,.10); }
 @keyframes breathe{ 0%,100%{ box-shadow:0 0 14px rgba(42,212,212,.35); } 50%{ box-shadow:0 0 26px rgba(42,212,212,.62); } }
 
-main{ flex:1; display:flex; flex-direction:column; gap:11px; padding:12px 12px 10px; min-height:0; }
+main{ flex:1; display:flex; flex-direction:column; gap:12px; padding:12px 12px 14px; max-width:640px; margin:0 auto; width:100%; }
 
-/* ── 코어 스테이지 (스캐너 링) ─────────────────────────────────────────── */
-.core{ position:relative; display:flex; flex-direction:column; align-items:center; gap:12px;
-  padding:6px 0 2px; }
-#vizWrap{ position:relative; width:100%; display:flex; justify-content:center; align-items:center; }
-canvas#viz{ display:block; width:100%; max-width:min(264px, 31dvh); aspect-ratio:1/1; height:auto;
-  filter:drop-shadow(0 0 calc(10px + var(--ai) * 26px) rgba(42,212,212,.20)); transition:filter .4s var(--ease); }
+/* ── 코어 스테이지 (신디사이저 랙 콘솔 & 오실로스코프) ─────────────────── */
+.core{ position:relative; display:flex; flex-direction:column; align-items:center; gap:10px;
+  padding:4px 0 2px; }
+#vizWrap{ position:relative; width:100%; max-width:540px; display:flex; justify-content:center; align-items:center;
+  background:linear-gradient(180deg, #07151c 0%, #03080d 100%);
+  border:1px solid rgba(42,212,212,.30); border-radius:14px;
+  box-shadow:0 0 28px rgba(0,0,0,.85), inset 0 1px 0 rgba(138,245,232,.18), inset 0 0 20px rgba(10,26,36,.8);
+  padding:7px; overflow:hidden; }
+#vizWrap::before{ content:""; position:absolute; inset:0; pointer-events:none; z-index:2;
+  background:repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 2px);
+  border-radius:12px; }
+canvas#viz{ display:block; width:100%; aspect-ratio:16/10; height:auto; border-radius:10px;
+  background:#020508; filter:drop-shadow(0 0 calc(8px + var(--ai) * 24px) rgba(42,212,212,.35));
+  transition:filter .25s var(--ease); }
 
 /* 링 위에 얹히는 텔레메트리 — 코너 브래킷 대신 사분면 정렬 */
 .telemetry{ width:100%; max-width:520px; display:grid; grid-template-columns:1fr 1fr;
@@ -103,31 +111,28 @@ canvas#viz{ display:block; width:100%; max-width:min(264px, 31dvh); aspect-ratio
 
 /* ── 더블 베젤 플레이트 (외곽 셸 + 내부 코어) ─────────────────────────── */
 .shell{ background:rgba(42,212,212,.045); border:1px solid var(--line); border-radius:var(--r-outer);
-  padding:5px; box-shadow:inset 0 1px 0 rgba(138,245,232,.07); }
+  padding:5px; box-shadow:inset 0 1px 0 rgba(138,245,232,.07); overflow:hidden; flex-shrink:0; }
 .shell > .plate,.card{ background:var(--plate2); border:1px solid rgba(42,212,212,.09);
   border-radius:var(--r-inner); box-shadow:inset 0 1px 0 rgba(138,245,232,.05); }
 .card{ padding:12px; }
 
-/* ─ 자막 ─────────────────────────────────────────────────────────────── */
-#transcript{ flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:9px;
-  min-height:150px; max-height:46dvh; padding:14px; -webkit-overflow-scrolling:touch;
-  /* 스크롤 경계에서 내용이 뚝 끊기지 않게 아래를 페이드 (고정 높이라 GPU 비용 미미) */
-  -webkit-mask-image:linear-gradient(180deg, #000 0, #000 calc(100% - 22px), transparent 100%);
-  mask-image:linear-gradient(180deg, #000 0, #000 calc(100% - 22px), transparent 100%); }
+/* ── 시스템 이벤트 로그 콘솔 ────────────────────────────────────────── */
+#transcript{ height:140px; min-height:110px; max-height:220px; overflow-y:auto;
+  display:flex; flex-direction:column; gap:6px; padding:10px 12px; -webkit-overflow-scrolling:touch;
+  background:rgba(5,13,20,.85); border-radius:var(--r-inner); border:1px solid rgba(42,212,212,.08); }
 .bubble{ max-width:88%; padding:9px 13px; border-radius:14px; white-space:pre-wrap;
   word-break:break-word; font-size:14.5px; line-height:1.55; animation:rise .5s var(--ease);
   border:1px solid var(--line); background:rgba(9,24,33,.5); }
 @keyframes rise{ from{ opacity:0; transform:translateY(8px); filter:blur(3px); }
                  to{ opacity:1; transform:none; filter:blur(0); } }
-.bubble.user{ align-self:flex-end; border-bottom-right-radius:4px;
-  border-color:var(--line2); background:linear-gradient(180deg, rgba(42,212,212,.13), rgba(26,143,156,.07)); color:var(--hot); }
-.bubble.assistant{ align-self:flex-start; border-bottom-left-radius:4px;
-  background:rgba(10,24,33,.86); color:#eaf6f8; font-size:15px; }
-.bubble.tool{ align-self:center; font-family:var(--mono); font-size:11.5px; color:var(--teal);
-  border-radius:10px; max-width:96%; border-style:dashed; }
-.bubble.ambient{ align-self:center; color:var(--dim); font-size:11.5px; font-family:var(--mono); }
-.bubble.system{ align-self:center; background:transparent; border-color:transparent; color:var(--dim2);
-  font-size:11px; font-family:var(--mono); }
+/* 사용자/AI 대화 자막은 숨김 (대화창에는 시스템 메시지만 표시) */
+.bubble.user, .bubble.assistant, .bubble.ambient{ display:none !important; }
+.bubble.system{ align-self:stretch; width:100%; max-width:100%; padding:7px 11px;
+  background:rgba(7,20,28,.45); border:1px solid rgba(42,212,212,.14); border-radius:6px;
+  color:var(--dim); font-size:11.5px; font-family:var(--mono); letter-spacing:.02em; }
+.bubble.tool{ align-self:stretch; width:100%; max-width:100%; padding:7px 11px;
+  background:rgba(7,20,28,.55); border:1px solid rgba(42,212,212,.2); border-left:3px solid var(--cyan);
+  border-radius:6px; color:var(--fg); font-size:11.5px; font-family:var(--mono); }
 .bubble .who{ display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.18em;
   text-transform:uppercase; opacity:.6; margin-bottom:4px; }
 #empty{ color:var(--dim2); font-size:12.5px; text-align:center; margin:auto; font-family:var(--mono);
@@ -161,8 +166,10 @@ button.on{ border-color:var(--cyan); color:var(--cyan); background:rgba(42,212,2
   background:rgba(2,24,27,.16); border:1px solid rgba(2,24,27,.22); font-size:10px; line-height:1;
   transition:transform .5s var(--ease); }
 .cta:hover .ico{ transform:translateX(2px) scale(1.06); }
-.controls{ display:grid; grid-template-columns:1fr 1fr; gap:9px; }
-.controls .wide{ grid-column:1 / -1; }
+.controls{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; width:100%; }
+.controls button{ height:48px; min-height:48px; padding:0 8px; font-size:14px; font-weight:600;
+  display:flex; align-items:center; justify-content:center; white-space:nowrap;
+  border-radius:10px; cursor:pointer; font-family:var(--sans); }
 
 /* ── 배너 ─────────────────────────────────────────────────────────────── */
 #banner{ display:none; font-size:13px; border-radius:var(--r-inner); padding:11px 13px;
@@ -184,9 +191,7 @@ footer{ padding:8px 14px 16px; color:var(--dim2); font-size:9.5px; font-family:v
 
 @media (min-width:680px){
   main{ max-width:760px; margin:0 auto; width:100%; }
-  .controls{ grid-template-columns:repeat(4,1fr); }
-  .controls .wide{ grid-column:auto; }
-  .controls .wide.cta{ grid-column:span 2; }
+  .controls{ grid-template-columns:repeat(3, 1fr); }
 }
 @media (prefers-reduced-motion:reduce){
   *{ animation-duration:.001ms !important; animation-iteration-count:1 !important;
@@ -205,48 +210,51 @@ footer{ padding:8px 14px 16px; color:var(--dim2); font-size:9.5px; font-family:v
 <main>
   <div id="banner" role="alert"></div>
 
-  <!-- 코어: 자비스 스캐너 링 + 사분면 텔레메트리 -->
+  <!-- 코어: 신디사이저 오실로스코프 & 16-밴드 스펙트럼 애널라이저 -->
   <section class="core">
-    <div id="vizWrap"><canvas id="viz" width="660" height="660"></canvas></div>
+    <div id="vizWrap"><canvas id="viz" width="660" height="412"></canvas></div>
     <div class="telemetry">
       <div class="tm">
-        <span class="k">State</span>
+        <span class="k">Synth Engine</span>
         <span class="v big" id="vadState">대기</span>
       </div>
       <div class="tm r">
-        <span class="k">Link</span>
+        <span class="k">Carrier Link</span>
         <span class="v" id="connInfo">-</span>
       </div>
       <div class="tm">
-        <span class="k">Mic</span>
+        <span class="k">Mic Mod In</span>
         <span class="v" id="micLevel">0.00</span>
         <span class="bar" id="micBar"><i></i></span>
       </div>
       <div class="tm r">
-        <span class="k">AI</span>
+        <span class="k">Agent Voice</span>
         <span class="v" id="aiLevel">0.00</span>
         <span class="bar" id="aiBar"><i></i></span>
       </div>
     </div>
   </section>
 
-  <div class="shell" style="flex:1;display:flex;min-height:0">
-    <div class="card" id="transcript" style="flex:1;display:flex;flex-direction:column;min-height:150px;padding:0">
-      <div id="empty">통화를 시작하면 실시간 자막이 여기에 표시됩니다.</div>
+  <!-- 1. 컨트롤 버튼 랙: 통화 시작 / 음소거 / 통화 종료 -->
+  <div class="shell">
+    <div class="plate" style="padding:12px">
+      <!-- 텍스트 전송 미사용: 숨김 처리 -->
+      <div class="row" style="display:none;margin-bottom:10px">
+        <input type="text" id="textInput" placeholder="타이핑으로 말하기" autocomplete="off">
+        <button id="sendBtn" class="ghost">전송</button>
+      </div>
+      <div class="controls">
+        <button id="startBtn" class="primary">통화 시작</button>
+        <button id="muteBtn" class="ghost">음소거</button>
+        <button id="hangupBtn" class="danger">통화 종료</button>
+      </div>
     </div>
   </div>
 
+  <!-- 2. 시스템 이벤트 로그 창 (버튼 아래 분리) -->
   <div class="shell">
-    <div class="plate" style="padding:12px">
-      <div class="row" style="margin-bottom:10px">
-        <input type="text" id="textInput" placeholder="타이핑으로 말하기" autocomplete="off">
-        <button id="sendBtn" class="ghost" disabled>전송</button>
-      </div>
-      <div class="controls">
-        <button id="startBtn" class="primary wide cta">통화 시작<span class="ico">&#9654;</span></button>
-        <button id="muteBtn" disabled>음소거</button>
-        <button id="hangupBtn" class="danger" disabled>통화 종료</button>
-      </div>
+    <div class="card" id="transcript">
+      <div id="empty">시스템 이벤트 로그가 여기에 표시됩니다.</div>
     </div>
   </div>
 
@@ -296,7 +304,9 @@ footer{ padding:8px 14px 16px; color:var(--dim2); font-size:9.5px; font-family:v
     maxBubbles: 200,
     stunFallback: [{ urls: ["stun:stun.l.google.com:19302"] }],
   };
-  if (params.get("token")) localStorage.setItem("bridge_token", params.get("token"));
+  if (params.get("token")) {
+    localStorage.setItem("bridge_token", params.get("token"));
+  }
 
   // ---- 상태 ----------------------------------------------------------------
   const S = {
@@ -338,9 +348,8 @@ footer{ padding:8px 14px 16px; color:var(--dim2); font-size:9.5px; font-family:v
     S.phase = phase;
     renderStatePill();
     $("startBtn").disabled = phase === "connecting" || phase === "live";
-    $("hangupBtn").disabled = !(phase === "connecting" || phase === "live");
-    $("muteBtn").disabled = phase !== "live";
-    $("sendBtn").disabled = phase !== "live";
+    $("hangupBtn").disabled = false;
+    $("muteBtn").disabled = false;
     if (note) banner(note, phase === "error");
   }
   function banner(text, isError) {
@@ -383,7 +392,14 @@ footer{ padding:8px 14px 16px; color:var(--dim2); font-size:9.5px; font-family:v
        서버 VAD 상태(S.vad)에서 유도한다 — 링이 '살아있다'는 피드백.
   ------------------------------------------------------------------------- */
   const REDUCED = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-  const RING = { seeded: false, parts: [] };
+  const SYNTH = {
+    peaks: new Array(16).fill(0),
+    peakDecay: new Array(16).fill(0),
+    freqLabels: ["40", "80", "160", "300", "500", "800", "1.2k", "1.8k", "2.5k", "3.5k", "5k", "7k", "9k", "12k", "15k", "18k"],
+    lastAiTime: null,
+    lastAiFreq: null,
+    lastMicTime: null,
+  };
 
   /* 캔버스 백킹 스토어를 CSS 크기 × DPR 로 맞춘다.
      (고정 660px 를 330px 로 축소하면 헤어라인이 뭉개지고 계단이 진다) */
@@ -391,123 +407,293 @@ footer{ padding:8px 14px 16px; color:var(--dim2); font-size:9.5px; font-family:v
     const cv = $("viz");
     if (!cv) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
-    const css = cv.clientWidth || 330;
-    const px = Math.max(240, Math.round(css * dpr));
-    if (cv.width !== px) { cv.width = px; cv.height = px; }
+    const cssW = cv.clientWidth || 360;
+    const cssH = cv.clientHeight || Math.round(cssW * 0.625);
+    const pxW = Math.max(320, Math.round(cssW * dpr));
+    const pxH = Math.max(200, Math.round(cssH * dpr));
+    if (cv.width !== pxW || cv.height !== pxH) { cv.width = pxW; cv.height = pxH; }
   }
   window.addEventListener("resize", sizeCanvas);
 
-  function seedParticles(n) {
-    RING.parts = [];
-    for (let i = 0; i < n; i++) {
-      RING.parts.push({ a: Math.random() * Math.PI * 2, j: Math.random(), s: .4 + Math.random() * .6 });
-    }
-  }
-
-  function drawScanner(ctx, w, h, mic, ai, t, k) {
-    k = k || 1;   // CSS 1px = k 장치 px — 해상도와 무관하게 같은 굵기로 보이게
-    const cx = w / 2, cy = h / 2, R = Math.min(w, h) * .335;
+  function drawSynth(ctx, w, h, mic, ai, t, k, aiTime, aiFreq, micTime) {
+    k = k || 1;
     ctx.clearRect(0, 0, w, h);
 
-    const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 2.6);
-    bg.addColorStop(0, "rgba(10,26,36,.96)");
-    bg.addColorStop(.45, "rgba(7,18,26,.55)");
-    bg.addColorStop(1, "rgba(3,5,10,0)");
+    // 1. 신디사이저 CRT 스코프 배경
+    const bg = ctx.createRadialGradient(w / 2, h * 0.45, 10 * k, w / 2, h * 0.45, Math.max(w, h) * 0.7);
+    bg.addColorStop(0, "rgba(7, 24, 28, 0.98)");
+    bg.addColorStop(0.55, "rgba(3, 13, 17, 0.98)");
+    bg.addColorStop(1, "rgba(2, 6, 8, 1)");
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, w, h);
 
-    const amp = .022 + mic * .045;
-    const rad = (a) => R * (1
-      + amp * Math.sin(3 * a + t * .42)
-      + amp * .72 * Math.sin(5 * a - t * .33)
-      + amp * .45 * Math.sin(7 * a + t * .24));
+    const padX = 14 * k;
+    const padY = 12 * k;
+    const scopeW = w - padX * 2;
+    const scopeH = h * 0.58;
+    const scopeY = padY + 14 * k;
+    const scopeMidY = scopeY + scopeH * 0.5;
 
-    ctx.globalCompositeOperation = "lighter";
-    ctx.lineCap = "round";
+    // 2. 오실로스코프 레티클 (그리드 격자선)
+    ctx.save();
+    ctx.strokeStyle = "rgba(42, 212, 212, 0.08)";
+    ctx.lineWidth = 1 * k;
 
-    const SEG = 72;
-    // 메시: 두 패밀리 실루엣
-    for (let fam = 0; fam < 2; fam++) {
+    const vDivs = 8;
+    for (let i = 0; i <= vDivs; i++) {
+      const y = scopeY + (scopeH / vDivs) * i;
       ctx.beginPath();
-      for (let i = 0; i <= SEG; i++) {
-        const a = (i / SEG) * Math.PI * 2;
-        const q = rad(a) * (fam === 0 ? 1 : .86);
-        const x = cx + Math.cos(a) * q, y = cy + Math.sin(a) * q;
-        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-      }
-      ctx.strokeStyle = fam === 0 ? "rgba(42,212,212,.20)" : "rgba(26,143,156,.17)";
-      ctx.lineWidth = k;
+      ctx.setLineDash([3 * k, 4 * k]);
+      ctx.moveTo(padX, y);
+      ctx.lineTo(padX + scopeW, y);
       ctx.stroke();
     }
-    // 메시: 방사 크로스해치 (두 패밀리를 잇는 결)
+    const hDivs = 10;
+    for (let j = 0; j <= hDivs; j++) {
+      const x = padX + (scopeW / hDivs) * j;
+      ctx.beginPath();
+      ctx.setLineDash([3 * k, 4 * k]);
+      ctx.moveTo(x, scopeY);
+      ctx.lineTo(x, scopeY + scopeH);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // 중심 십자축 및 서브 눈금
+    ctx.strokeStyle = "rgba(42, 212, 212, 0.22)";
+    ctx.lineWidth = 1.2 * k;
     ctx.beginPath();
-    for (let i = 0; i < SEG; i += 2) {
-      const a = (i / SEG) * Math.PI * 2, r1 = rad(a);
-      ctx.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
-      ctx.lineTo(cx + Math.cos(a) * r1 * .86, cy + Math.sin(a) * r1 * .86);
-    }
-    ctx.strokeStyle = "rgba(26,143,156,.20)";
-    ctx.lineWidth = k;
+    ctx.moveTo(padX, scopeMidY);
+    ctx.lineTo(padX + scopeW, scopeMidY);
+    ctx.moveTo(w / 2, scopeY);
+    ctx.lineTo(w / 2, scopeY + scopeH);
     ctx.stroke();
 
-    // 실루엣 림 (바깥/안쪽) — 가산 블룸
-    for (const [rk, col, lw] of [[1, "rgba(138,245,232,.78)", 1.4], [.86, "rgba(42,212,212,.42)", 1]]) {
+    const tickStep = scopeW / 50;
+    ctx.beginPath();
+    for (let tx = padX; tx <= padX + scopeW; tx += tickStep) {
+      ctx.moveTo(tx, scopeMidY - 2 * k);
+      ctx.lineTo(tx, scopeMidY + 2 * k);
+    }
+    for (let ty = scopeY; ty <= scopeY + scopeH; ty += (scopeH / 40)) {
+      ctx.moveTo(w / 2 - 2 * k, ty);
+      ctx.lineTo(w / 2 + 2 * k, ty);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // 3. 신디사이저 HUD 상단 인디케이터
+    ctx.font = `600 ${Math.max(9, 9.5 * k)}px ui-monospace, SFMono-Regular, monospace`;
+    ctx.textBaseline = "top";
+    const isAiActive = ai > 0.03;
+    ctx.fillStyle = isAiActive ? "rgba(42, 255, 200, 0.95)" : "rgba(122, 166, 175, 0.75)";
+    ctx.fillText(isAiActive ? "OSC-1: AGENT VOICE [ACTIVE]" : "OSC-1: AGENT CARRIER [IDLE]", padX + 4 * k, padY);
+
+    ctx.textAlign = "right";
+    ctx.fillStyle = "rgba(122, 166, 175, 0.65)";
+    ctx.fillText("TIME: 2ms/DIV · 24kHz DSP", padX + scopeW - 4 * k, padY);
+    ctx.textAlign = "left";
+
+    // 4. 파형 렌더링 (에이전트 음성 중심 오실로스코프)
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(padX, scopeY, scopeW, scopeH);
+    ctx.clip();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    // 사용자 마이크 변조 입력 파형 (배경 보조 트레이스)
+    if (mic > 0.02) {
       ctx.beginPath();
-      for (let i = 0; i <= SEG * 2; i++) {
-        const a = (i / (SEG * 2)) * Math.PI * 2, r = rad(a) * rk;
-        const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+      ctx.strokeStyle = "rgba(26, 143, 156, 0.35)";
+      ctx.lineWidth = 1.5 * k;
+      const stepM = scopeW / 64;
+      for (let i = 0; i <= 64; i++) {
+        const x = padX + i * stepM;
+        let v = 0;
+        if (micTime && micTime.length) {
+          const idx = Math.floor((i / 64) * micTime.length);
+          v = (micTime[idx] - 128) / 128;
+        } else {
+          v = Math.sin(i * 0.3 + t * 8) * mic;
+        }
+        const y = scopeMidY + v * (scopeH * 0.28) * mic;
         if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       }
-      ctx.strokeStyle = col;
-      ctx.lineWidth = lw * k;
-      ctx.shadowColor = "rgba(42,212,212,.85)";
-      ctx.shadowBlur = 16 * k;
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-    }
-
-    // 정점 파티클 (상단·좌하단 밀집 / 하단 성김)
-    if (!RING.seeded) { seedParticles(150); RING.seeded = true; }
-    for (const p of RING.parts) {
-      if (!REDUCED) { p.a += .0016 * p.s; if (p.a > Math.PI * 2) p.a -= Math.PI * 2; }
-      if (p.j > .78 && p.a > .7 && p.a < 2.5) continue;
-      const r = rad(p.a) * (.985 + p.j * .02);
-      const x = cx + Math.cos(p.a) * r, y = cy + Math.sin(p.a) * r;
-      const b = (.35 + mic * .65) * (.4 + p.j * .6);
-      ctx.fillStyle = "rgba(217,255,250," + b.toFixed(3) + ")";
-      ctx.beginPath();
-      ctx.arc(x, y, (.9 + p.j * 1.2) * k, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // 고스트 궤도 호 3개
-    for (const [rk, o] of [[.42, .20], [.52, .15], [.63, .11]]) {
-      ctx.beginPath();
-      ctx.arc(cx, cy, R * rk, t * .12 + rk * 3, t * .12 + rk * 3 + Math.PI * 1.25);
-      ctx.strokeStyle = "rgba(42,212,212," + o + ")";
-      ctx.lineWidth = k;
       ctx.stroke();
     }
 
-    // 중앙 코어
-    const cr = R * .15, reach = cr * (2.6 + ai * 1.6);
-    const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, reach);
-    halo.addColorStop(0, "rgba(29,90,99," + (.55 + ai * .40).toFixed(2) + ")");
-    halo.addColorStop(.55, "rgba(11,42,51,.45)");
-    halo.addColorStop(1, "rgba(11,42,51,0)");
-    ctx.fillStyle = halo;
-    ctx.beginPath(); ctx.arc(cx, cy, reach, 0, Math.PI * 2); ctx.fill();
+    // 메인 에이전트 음성 신스 파형
+    const points = 128;
+    const step = scopeW / points;
+    const waveY = new Float32Array(points + 1);
 
-    const core = ctx.createRadialGradient(cx - cr * .3, cy + cr * .3, 0, cx, cy, cr);
-    core.addColorStop(0, "rgba(29,90,99,.95)");
-    core.addColorStop(1, "rgba(11,42,51,.98)");
-    ctx.beginPath(); ctx.arc(cx, cy, cr, 0, Math.PI * 2);
-    ctx.fillStyle = core; ctx.fill();
-    ctx.strokeStyle = "rgba(138,245,232," + (.35 + ai * .50).toFixed(2) + ")";
-    ctx.lineWidth = k;
+    for (let i = 0; i <= points; i++) {
+      let sample = 0;
+      if (isAiActive && aiTime && aiTime.length) {
+        const idx = Math.floor((i / points) * aiTime.length);
+        sample = (aiTime[idx] - 128) / 128;
+      } else if (isAiActive) {
+        const ph = i * 0.18 - t * 14;
+        sample = Math.sin(ph) * 0.58
+               + Math.sin(ph * 2.01 + 0.3) * 0.25 * ai
+               + Math.sin(ph * 3.98 - 0.5) * 0.18 * ai
+               + (Math.sin(ph * 7.1) > 0 ? 0.08 : -0.08) * ai;
+      } else {
+        sample = Math.sin(i * 0.09 - t * 2.2) * 0.035
+               + Math.sin(i * 0.21 + t * 1.1) * 0.015;
+      }
+      const saturated = Math.tanh(sample * (isAiActive ? 2.2 : 1.0));
+      const ampY = isAiActive ? Math.min(scopeH * 0.44, scopeH * 0.42 * (ai * 1.8 + 0.15)) : (scopeH * 0.08);
+      waveY[i] = scopeMidY - saturated * ampY;
+    }
+
+    // 트레이스 1: 형광 발광 글로우 (Phosphor Bloom)
+    ctx.beginPath();
+    for (let i = 0; i <= points; i++) {
+      const x = padX + i * step;
+      if (i === 0) ctx.moveTo(x, waveY[i]); else ctx.lineTo(x, waveY[i]);
+    }
+    ctx.strokeStyle = isAiActive ? "rgba(42, 235, 200, 0.28)" : "rgba(42, 212, 212, 0.14)";
+    ctx.lineWidth = 6 * k;
+    ctx.shadowColor = isAiActive ? "rgba(42, 255, 210, 0.9)" : "rgba(42, 212, 212, 0.4)";
+    ctx.shadowBlur = (isAiActive ? 18 : 8) * k;
     ctx.stroke();
 
-    ctx.globalCompositeOperation = "source-over";
+    // 트레이스 2: 서브 하모닉스 파형 (Phase Offset)
+    if (isAiActive) {
+      ctx.beginPath();
+      for (let i = 0; i <= points; i++) {
+        const x = padX + i * step;
+        const subOffset = Math.sin(i * 0.15 + t * 9) * (6 * k * ai);
+        const y = waveY[i] + subOffset;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = "rgba(26, 170, 185, 0.45)";
+      ctx.lineWidth = 2.4 * k;
+      ctx.shadowBlur = 6 * k;
+      ctx.stroke();
+    }
+
+    // 트레이스 3: 고밀도 전자 코어 빔
+    ctx.beginPath();
+    for (let i = 0; i <= points; i++) {
+      const x = padX + i * step;
+      if (i === 0) ctx.moveTo(x, waveY[i]); else ctx.lineTo(x, waveY[i]);
+    }
+    ctx.strokeStyle = isAiActive ? "rgba(230, 255, 250, 0.98)" : "rgba(138, 245, 232, 0.85)";
+    ctx.lineWidth = 1.6 * k;
+    ctx.shadowColor = "rgba(138, 245, 232, 0.8)";
+    ctx.shadowBlur = 4 * k;
+    ctx.stroke();
+    ctx.restore();
+
+    // 5. 하단 16-밴드 신디사이저 그래픽 스펙트럼 애널라이저
+    const specY = scopeY + scopeH + 10 * k;
+    const specH = h - specY - padY - 14 * k;
+    const numBands = 16;
+    const gap = 4 * k;
+    const bandW = (scopeW - gap * (numBands - 1)) / numBands;
+
+    ctx.font = `600 ${Math.max(8, 8.5 * k)}px ui-monospace, SFMono-Regular, monospace`;
+    ctx.fillStyle = "rgba(91, 135, 146, 0.85)";
+    ctx.fillText("16-BAND GRAPHIC EQUALIZER / REALTIME SPECTRUM", padX, specY - 3 * k);
+
+    for (let b = 0; b < numBands; b++) {
+      const bx = padX + b * (bandW + gap);
+
+      let energy = 0;
+      if (isAiActive && aiFreq && aiFreq.length) {
+        const binStart = Math.floor(Math.pow(b / numBands, 1.6) * (aiFreq.length * 0.75));
+        const binEnd = Math.max(binStart + 1, Math.floor(Math.pow((b + 1) / numBands, 1.6) * (aiFreq.length * 0.75)));
+        let sum = 0, count = 0;
+        for (let idx = binStart; idx < binEnd && idx < aiFreq.length; idx++) {
+          sum += aiFreq[idx];
+          count++;
+        }
+        energy = count > 0 ? (sum / count) / 255.0 : 0;
+      } else if (isAiActive) {
+        const formant = Math.exp(-Math.pow(b - 4.5, 2) / 7) * 0.75
+                      + Math.exp(-Math.pow(b - 8.5, 2) / 6) * 0.55
+                      + Math.exp(-Math.pow(b - 12.5, 2) / 8) * 0.35;
+        energy = Math.min(1, formant * (ai * 1.3 + 0.1 * Math.sin(t * 12 + b)));
+      } else {
+        energy = 0.03 + 0.02 * Math.sin(t * 2 + b * 0.5);
+      }
+
+      if (energy > SYNTH.peaks[b]) {
+        SYNTH.peaks[b] = energy;
+        SYNTH.peakDecay[b] = 0;
+      } else {
+        SYNTH.peakDecay[b] += 0.008;
+        SYNTH.peaks[b] = Math.max(energy, SYNTH.peaks[b] - SYNTH.peakDecay[b]);
+      }
+
+      const barVal = Math.min(1, Math.max(0, energy));
+      const segs = 9;
+      const segH = (specH - (segs - 1) * 2 * k) / segs;
+      const litSegs = Math.round(barVal * segs);
+
+      for (let s = 0; s < segs; s++) {
+        const sy = specY + specH - (s + 1) * (segH + 2 * k);
+        const isLit = s < litSegs;
+        if (isLit) {
+          if (s >= 7) {
+            ctx.fillStyle = "rgba(240, 180, 100, 0.95)";
+            ctx.shadowColor = "rgba(240, 180, 100, 0.8)";
+            ctx.shadowBlur = 6 * k;
+          } else if (s >= 4) {
+            ctx.fillStyle = "rgba(138, 245, 232, 0.9)";
+            ctx.shadowColor = "rgba(138, 245, 232, 0.6)";
+            ctx.shadowBlur = 4 * k;
+          } else {
+            ctx.fillStyle = "rgba(42, 212, 212, 0.8)";
+            ctx.shadowBlur = 0;
+          }
+        } else {
+          ctx.fillStyle = "rgba(26, 60, 70, 0.25)";
+          ctx.shadowBlur = 0;
+        }
+        ctx.fillRect(bx, sy, bandW, segH);
+      }
+      ctx.shadowBlur = 0;
+
+      // 피크 홀드 인디케이터
+      const peakY = specY + specH - (SYNTH.peaks[b] * specH);
+      ctx.fillStyle = "rgba(235, 255, 250, 0.95)";
+      ctx.shadowColor = "rgba(138, 245, 232, 0.9)";
+      ctx.shadowBlur = 4 * k;
+      ctx.fillRect(bx, Math.max(specY, peakY - 2 * k), bandW, 2 * k);
+      ctx.shadowBlur = 0;
+
+      // 하단 주파수 표기
+      ctx.font = `500 ${Math.max(7, 7.5 * k)}px ui-monospace, SFMono-Regular, monospace`;
+      ctx.fillStyle = "rgba(91, 135, 146, 0.75)";
+      ctx.textAlign = "center";
+      ctx.fillText(SYNTH.freqLabels[b], bx + bandW / 2, specY + specH + 3 * k);
+    }
+    ctx.textAlign = "left";
+
+    // 6. VCF 공진 필터 다이얼 (우측 하단 신스 모듈 디테일)
+    const dialX = padX + scopeW - 20 * k;
+    const dialY = scopeY + scopeH - 20 * k;
+    const dialR = 12 * k;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(dialX, dialY, dialR, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(42, 212, 212, 0.2)";
+    ctx.lineWidth = 1 * k;
+    ctx.stroke();
+
+    const resAngle = (0.7 + (isAiActive ? ai * 0.8 : 0)) * Math.PI * 1.5;
+    ctx.beginPath();
+    ctx.arc(dialX, dialY, dialR, -Math.PI * 0.75, -Math.PI * 0.75 + resAngle);
+    ctx.strokeStyle = isAiActive ? "rgba(42, 255, 200, 0.85)" : "rgba(26, 143, 156, 0.5)";
+    ctx.lineWidth = 2 * k;
+    ctx.shadowColor = "rgba(42, 255, 200, 0.7)";
+    ctx.shadowBlur = isAiActive ? 6 * k : 0;
+    ctx.stroke();
+    ctx.restore();
   }
 
   function draw() {
@@ -520,10 +706,11 @@ footer{ padding:8px 14px 16px; color:var(--dim2); font-size:9.5px; font-family:v
     const w = cv ? cv.width : 0, h = cv ? cv.height : 0;
     const scale = cv && cv.clientWidth ? w / cv.clientWidth : 1;   // CSS 1px → 장치 px
     const mic = S.levels.mic;
-    // element 모드에선 AI analyser 가 없으므로 서버 VAD 상태로 발화 여부를 유도한다.
-    const speaking = String(S.vad || "").indexOf("말") >= 0;
+    // element 모드에선 브라우저 WebRTC 트랙 보호를 위해 VAD 상태로 신스 파형을 유도한다.
+    const speaking = String(S.vad || "").indexOf("말") >= 0 || String(S.vad || "").indexOf("응답") >= 0 || String(S.vad || "").indexOf("AI") >= 0;
     const t = REDUCED ? 0 : performance.now() / 1000;
-    const ai = Math.max(S.levels.ai, speaking ? .34 + .22 * Math.sin(t * 6) : 0);
+    const synthMod = speaking ? (0.45 + 0.26 * Math.sin(t * 7.5) + 0.16 * Math.sin(t * 13.2)) : 0;
+    const ai = Math.max(S.levels.ai, synthMod);
     const root = document.documentElement;
     root.style.setProperty("--mic", mic.toFixed(3));
     root.style.setProperty("--ai", ai.toFixed(3));
@@ -534,21 +721,40 @@ footer{ padding:8px 14px 16px; color:var(--dim2); font-size:9.5px; font-family:v
     };
     setBar("micBar", mic);
     setBar("aiBar", ai);
-    if (ctx && w && h) drawScanner(ctx, w, h, mic, ai, t, scale);
+    if (ctx && w && h) drawSynth(ctx, w, h, mic, ai, t, scale, SYNTH.lastAiTime, SYNTH.lastAiFreq, SYNTH.lastMicTime);
     $("micLevel").textContent = mic.toFixed(2);
     $("aiLevel").textContent = ai.toFixed(2);
   }
   function tick() {
     const read = (an) => {
-      if (!an || !S.audioCtx) return 0;
-      const buf = new Uint8Array(an.fftSize);
-      try { an.getByteTimeDomainData(buf); } catch (e) { return 0; }
+      if (!an || !S.audioCtx) return { rms: 0, time: null, freq: null };
+      let timeBuf = null;
+      let freqBuf = null;
       let sum = 0;
-      for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; sum += v * v; }
-      return Math.min(1, Math.sqrt(sum / buf.length) * 3.2);
+      try {
+        const tb = new Uint8Array(an.fftSize);
+        an.getByteTimeDomainData(tb);
+        timeBuf = tb;
+        for (let i = 0; i < tb.length; i++) {
+          const v = (tb[i] - 128) / 128;
+          sum += v * v;
+        }
+        const fb = new Uint8Array(an.frequencyBinCount);
+        an.getByteFrequencyData(fb);
+        freqBuf = fb;
+      } catch (e) {
+        return { rms: 0, time: null, freq: null };
+      }
+      const rms = Math.min(1, Math.sqrt(sum / (timeBuf ? timeBuf.length : 1)) * 3.2);
+      return { rms, time: timeBuf, freq: freqBuf };
     };
-    S.levels.mic = read(S.micAnalyser);
-    S.levels.ai = read(S.aiAnalyser);
+    const micData = read(S.micAnalyser);
+    const aiData = read(S.aiAnalyser);
+    S.levels.mic = micData.rms;
+    S.levels.ai = aiData.rms;
+    SYNTH.lastAiTime = aiData.time;
+    SYNTH.lastAiFreq = aiData.freq;
+    SYNTH.lastMicTime = micData.time;
     draw();
     requestAnimationFrame(tick);
   }
@@ -598,13 +804,19 @@ footer{ padding:8px 14px 16px; color:var(--dim2); font-size:9.5px; font-family:v
 
   function attachAnalyser(stream, which) {
     if (which === "ai" && OUT_MODE !== "webaudio") {
-      // AI 스트림은 WebAudio에 절대 물리지 않는다(엘리먼트 전용 재생).
-      // 이유: 안드로이드에서 (a) 엘리먼트 출력이 죽거나 (b) AEC 참조가 끊겨
-      //       에코가 마이크로 돌아오고 ASR이 오전사한다.
+      // ⚠️ 중요: WebRTC 원격 AI 스트림을 브라우저 WebAudio createMediaStreamSource에 물리면
+      //    Chrome/Safari가 원격 트랙을 즉시 ended(종료) 처리하여 통화가 끊긴다.
+      //    따라서 기본 element 모드에서는 <audio>로 안전 재생하고 WebAudio에 물리지 않는다.
       const el = $("remoteAudio");
       if (el) el.muted = false;
       S.aiAnalyser = null;
       return null;
+    }
+    if (!S.audioCtx) {
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) S.audioCtx = new AC();
+      } catch (e) {}
     }
     if (!S.audioCtx || !stream) return null;
     try {
@@ -624,19 +836,21 @@ footer{ padding:8px 14px 16px; color:var(--dim2); font-size:9.5px; font-family:v
       }
       an.connect(S._analyserSink);
       if (which === "ai") {
-        // 마이크 분석기는 절대 스피커로 보내지 않는다(하울링).
-        // AI 스트림만 안드로이드에서 WebAudio → 스피커로 직결한다.
-        if (NEEDS_WEBAUDIO_OUT) {
+        const el = $("remoteAudio");
+        if (OUT_MODE === "webaudio" && NEEDS_WEBAUDIO_OUT) {
           const g = S.audioCtx.createGain();
           g.gain.value = 1.0;
           an.connect(g);              // AnalyserNode는 통과형
           g.connect(S.audioCtx.destination);
           S.aiGain = g;
-          const el = $("remoteAudio");
           if (el) el.muted = true;
+        } else {
+          if (el) el.muted = false;
         }
+        S.aiAnalyser = an;
+      } else {
+        S.micAnalyser = an;
       }
-      if (which === "mic") S.micAnalyser = an; else S.aiAnalyser = an;
       return an;
     } catch (e) { return null; }
   }
@@ -940,6 +1154,9 @@ footer{ padding:8px 14px 16px; color:var(--dim2); font-size:9.5px; font-family:v
     $("startBtn").addEventListener("click", () => { unlockAudio(); connect(); });
     $("hangupBtn").addEventListener("click", hangup);
     $("muteBtn").addEventListener("click", toggleMute);
+    $("startBtn").disabled = false;
+    $("hangupBtn").disabled = false;
+    $("muteBtn").disabled = false;
     $("sendBtn").addEventListener("click", sendText);
     $("textInput").addEventListener("keydown", (e) => { if (e.key === "Enter") sendText(); });
     $("tokenInput").value = CFG.token || "";

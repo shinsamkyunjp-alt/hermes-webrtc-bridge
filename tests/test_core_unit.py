@@ -270,6 +270,30 @@ class TestEventDispatch(unittest.IsolatedAsyncioTestCase):
         self.assertIn("response_started", seen)
         self.assertIn("response_done", seen)
 
+    async def test_events_bounded_memory(self) -> None:
+        """이벤트가 1000개를 초과해도 메모리 누수가 발생하지 않도록 deque maxlen 적용 검증."""
+        s = self._sess()
+        for i in range(1200):
+            await s.emit(f"event_{i}", {"idx": i})
+        self.assertEqual(len(s.events), 1000)
+        self.assertEqual(s.events[0][0], "event_200")
+        self.assertEqual(s.events[-1][0], "event_1199")
+
+    async def test_agent_proc_terminated_on_session_close(self) -> None:
+        """세션 종료 시 실행 중인 Agent 서브프로세스가 안전하게 SIGTERM/SIGKILL 정리되는지 검증."""
+        s = self._sess(agent_bridge=True)
+        proc = await asyncio.create_subprocess_exec(
+            sys.executable, "-c", "import time; time.sleep(30)",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            start_new_session=True,
+        )
+        s._current_agent_proc = proc
+        self.assertIsNone(proc.returncode)
+        await s.close()
+        self.assertIsNotNone(proc.returncode)
+        self.assertIsNone(s._current_agent_proc)
+
 
 class TestMicGate(unittest.TestCase):
     def test_speaker_mode_blocks_during_playback(self) -> None:

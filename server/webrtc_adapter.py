@@ -39,11 +39,8 @@ DASHSCOPE_IN_RATE = 16000
 DASHSCOPE_OUT_RATE = 24000
 UP_CHUNK_BYTES = 3200  # 100ms @16k — 기존 CLI와 동일 업링크 청크 규격
 DOWNMIX_COMP_DB = 3.0  # M0 finding #4 (−3.01dB) 보정
-DEFAULT_MAX_BUFFER_MS = 6000  # 지터 버퍼 상한 (초과분은 오래된 것부터 버림)
-# ⚠️ 2026-09-17 실기기 실측: 500ms 로는 부족하다. DashScope TTS가 생성된 음성을
-#    실시간보다 빠르게 버스트로 밀어주기 때문에, 500ms 상한에서는 응답 11.9초 중
-#    8.6초가 버려져(dropped_bytes 827456) 음성이 토막났다. 버스트 전체를 담을 수
-#    있게 넉넉히 잡는다. 재생 자체는 recv() 가 20ms 실시간 페이스로 소비한다.
+DEFAULT_TARGET_BUFFER_MS = 500  # 일반 스트리밍 목표 버퍼 (지연 최소화)
+DEFAULT_MAX_BUFFER_MS = 4000     # 적응형 상한 (DashScope 빠른 버스트 유입 시 확장 한도)
 
 
 # --------------------------------------------------------------------------- #
@@ -141,10 +138,19 @@ class QwenAudioTrack(AudioStreamTrack):
       * `flush()`는 Barge-in(말 끊기) 시 출 큐를 즉시 비운다.
     """
 
-    def __init__(self, max_buffer_ms: int = DEFAULT_MAX_BUFFER_MS) -> None:
+    def __init__(
+        self,
+        max_buffer_ms: int = DEFAULT_MAX_BUFFER_MS,
+        target_buffer_ms: int = DEFAULT_TARGET_BUFFER_MS,
+        adaptive: bool = True,
+    ) -> None:
         super().__init__()
         self._buf = bytearray()
-        self._max_bytes = max(1, max_buffer_ms * WEBRTC_RATE // 1000) * 2
+        self._max_buffer_ms = max_buffer_ms
+        self._target_buffer_ms = min(target_buffer_ms, max_buffer_ms)
+        self._adaptive = adaptive
+        self._current_max_bytes = max(1, (self._target_buffer_ms if adaptive else max_buffer_ms) * WEBRTC_RATE // 1000) * 2
+        self._absolute_max_bytes = max(1, max_buffer_ms * WEBRTC_RATE // 1000) * 2
         self._resampler = PCMResampler(DASHSCOPE_OUT_RATE, WEBRTC_RATE)
         self._index = 0
         self._t0: float | None = None
@@ -162,20 +168,38 @@ class QwenAudioTrack(AudioStreamTrack):
         self.resample_samples_out = 0
         self.pts_jumps = 0
         self.pace_late_ms_max = 0.0
+        self._first_feed_time: float | None = None
+        self._first_audio_frame_time: float | None = None
+        self._peak_bytes = 0
+        self._last_feed_time: float | None = None
 
     # -- 주입/제어 ---------------------------------------------------------- #
     def feed(self, pcm24k: bytes) -> None:
         """DashScope 24k PCM 청크를 48k로 변환해 지터 버퍼에 넣는다."""
         if not pcm24k:
             return
+        now = time.monotonic()
+        if self._first_feed_time is None:
+            self._first_feed_time = now
+
+        # 적응형 버퍼: 빠른 버스트 유입 시 상한 확장
+        if self._adaptive:
+            if self._last_feed_time is not None and (now - self._last_feed_time) < 0.10:
+                growth = int(400 * WEBRTC_RATE // 1000 * 2)
+                self._current_max_bytes = min(self._absolute_max_bytes, self._current_max_bytes + growth)
+        self._last_feed_time = now
+
         self.fed_bytes += len(pcm24k)
         out = self._resampler.process(pcm24k)
         if not out:
             return
         self.resample_samples_out += len(out) // 2
         self._buf.extend(out)
-        if len(self._buf) > self._max_bytes:  # 지연 누적 방지: 오래된 것부터 폐기
-            over = len(self._buf) - self._max_bytes
+        self._peak_bytes = max(self._peak_bytes, len(self._buf))
+
+        limit = self._current_max_bytes if self._adaptive else self._absolute_max_bytes
+        if len(self._buf) > limit:  # 지연 누적 방지: 오래된 것부터 폐기
+            over = len(self._buf) - limit
             over -= over % 2
             del self._buf[:over]
             self.dropped_bytes += over
@@ -187,6 +211,8 @@ class QwenAudioTrack(AudioStreamTrack):
         self.flushes += 1
         if dropped:
             self.dropped_bytes += dropped
+        if self._adaptive:
+            self._current_max_bytes = max(1, self._target_buffer_ms * WEBRTC_RATE // 1000) * 2
 
     @property
     def buffered_bytes(self) -> int:
@@ -206,15 +232,25 @@ class QwenAudioTrack(AudioStreamTrack):
         if len(self._buf) >= BYTES_PER_FRAME:
             pcm = bytes(self._buf[:BYTES_PER_FRAME])
             del self._buf[:BYTES_PER_FRAME]
+            if self._first_audio_frame_time is None:
+                self._first_audio_frame_time = time.monotonic()
             if self.on_play is not None:  # 실제 송출 시점 → 에코 게이트 갱신
                 try:
                     self.on_play()
                 except Exception:  # noqa: BLE001
                     pass
+            # 버퍼가 안정적으로 소진되면 점진적으로 타깃 버퍼 크기로 회귀
+            if self._adaptive and self._current_max_bytes > (self._target_buffer_ms * WEBRTC_RATE // 1000 * 2):
+                target_bytes = self._target_buffer_ms * WEBRTC_RATE // 1000 * 2
+                if len(self._buf) <= target_bytes:
+                    drain_step = int(20 * WEBRTC_RATE // 1000 * 2)
+                    self._current_max_bytes = max(target_bytes, self._current_max_bytes - drain_step)
         else:
             pcm = silence(BYTES_PER_FRAME)
             self.silent_frames += 1
             self.underruns += 1
+            if self._adaptive:
+                self._current_max_bytes = max(1, self._target_buffer_ms * WEBRTC_RATE // 1000) * 2
 
         frame = av.AudioFrame(format="s16", layout="mono", samples=SAMPLES_PER_FRAME)
         frame.sample_rate = WEBRTC_RATE
@@ -227,6 +263,12 @@ class QwenAudioTrack(AudioStreamTrack):
         return frame
 
     def stats(self) -> dict[str, Any]:
+        first_audio_delay_ms = None
+        if self._first_feed_time is not None and self._first_audio_frame_time is not None:
+            first_audio_delay_ms = round((self._first_audio_frame_time - self._first_feed_time) * 1000, 1)
+        completion_rate = round(
+            (self.fed_bytes - self.dropped_bytes) / max(1, self.fed_bytes) * 100, 1
+        )
         return {
             "frames_out": self.frames_out,
             "silent_frames": self.silent_frames,
@@ -236,6 +278,10 @@ class QwenAudioTrack(AudioStreamTrack):
             "resample_samples_out": self.resample_samples_out,
             "dropped_bytes": self.dropped_bytes,
             "buffered_bytes": len(self._buf),
+            "current_buffer_ms": round(len(self._buf) / (WEBRTC_RATE * 2) * 1000, 1),
+            "peak_buffer_ms": round(self._peak_bytes / (WEBRTC_RATE * 2) * 1000, 1),
+            "first_audio_delay_ms": first_audio_delay_ms,
+            "completion_rate": completion_rate,
             "pts_jumps": self.pts_jumps,
             "sample_rate": WEBRTC_RATE,
             "frame_samples": SAMPLES_PER_FRAME,

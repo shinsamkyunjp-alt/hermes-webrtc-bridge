@@ -90,7 +90,7 @@
      * 브라우저 Opus 트랙 수신 핸들러(PyAV 48k → 16k 변환 후 `push_audio` 전달).
   2. FastAPI 기반 세션 관리 서버(`server.py`):
      * `POST /api/offer`: SDP Offer 수신 → RTCPeerConnection 생성 → ICE Candidate 교환 → SDP Answer 반환.
-     * STUN(`stun:stun.l.google.com:19302`) + Tailscale DERP 릴레이 폴백 설정 (LTE/5G Symmetric NAT 대비).
+     * STUN(`stun:stun.l.google.com:19302`) + 표준 TURN(`BRIDGE_TURN_*`) 릴레이 폴백 지원 (LTE/5G Symmetric NAT 대비, DERP와 분리).
      * 세션 종료/연결 끊김 시 DashScope 세션 안전 종료(리소스 누수 방지).
      * **DataChannel `events` 생성**: 자막(ASR/어시스턴트 텍스트), VAD 상태(listening/thinking/speaking),
        에이전트 위임 상태를 JSON으로 브라우저에 실시간 푸시. (M3 UI와 연동)
@@ -204,7 +204,7 @@
   3. aiortc 무음 프레임 + PTS(960s/20ms) 타이밍 설계 (M2)
   4. Barge-in 시 WebRTC 송출 큐 flush (M2)
   5. 시그널링 API 인증 토큰(BRIDGE_AUTH_TOKEN) 추가 (5절)
-* **P2 (주요 보완, 반영 완료)**: 단일 사용자 선점형 세션 정책, STUN+DERP 폴백, 통화 종료 시 에이전트 서브프로세스 취소 루틴, 공수 16~18h 현실화
+* **P2 (주요 보완, 반영 완료)**: 단일 사용자 선점형 세션 정책, STUN+표준 TURN 폴백, 통화 종료 시 에이전트 서브프로세스 취소 루틴, 공수 16~18h 현실화
 * **P3 (문구/표기, 반영 완료)**: 토큰 파싱 행 번호(484~491) 정정, flock 파일명 정정, iOS 잠금 시 WebRTC 일시 중단 UX 안내
 
 ## 10. 진행 상태 (야간 자율 개발용)

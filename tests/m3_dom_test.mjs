@@ -163,7 +163,7 @@ async function scenarioInit() {
   const doc = dom.window.document;
   record("초기 상태 라벨 = '대기'", txt(doc, "statePill") === "대기", txt(doc, "statePill"));
   record("통화 시작 버튼 활성", doc.getElementById("startBtn").disabled === false);
-  record("통화 종료 버튼 비활성", doc.getElementById("hangupBtn").disabled === true);
+  record("통화 종료 버튼 활성", doc.getElementById("hangupBtn").disabled === false);
   record("URL ?token= → localStorage 저장",
     dom.window.localStorage.getItem("bridge_token") === "test-token",
     String(dom.window.localStorage.getItem("bridge_token")));

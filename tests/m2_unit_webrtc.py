@@ -168,6 +168,17 @@ class TestQwenAudioTrack(unittest.TestCase):
         self.assertLessEqual(track.buffered_bytes, 100 * WEBRTC_RATE // 1000 * 2)
         self.assertGreater(track.dropped_bytes, 0, "지연 누적 방지를 위해 오래된 것부터 폐기")
 
+    def test_adaptive_jitter_buffer_burst_expansion(self) -> None:
+        """버스트 유입 시 적응형 지터 버퍼가 동적으로 확장되어 음성 유실을 방지하는지 검증."""
+        track = QwenAudioTrack(max_buffer_ms=4000, target_buffer_ms=500, adaptive=True)
+        chunk = tone(DASHSCOPE_OUT_RATE, 2400).tobytes()  # 100ms
+        for _ in range(12):  # 1.2초 분량 연속 주입
+            track.feed(chunk)
+        st = track.stats()
+        self.assertGreater(st["current_buffer_ms"], 450, "버스트 유입으로 목표 버퍼 이상 수용")
+        self.assertEqual(st["dropped_bytes"], 0, "적응형 상한(4000ms) 내에서는 드롭 없어야 함")
+        self.assertEqual(st["completion_rate"], 100.0)
+
 
 class TestPCMUtils(unittest.TestCase):
     """4·5·6 — 디인터리브/다운믹스 보상/리샘플 비율."""
@@ -245,6 +256,46 @@ class TestWebRTCAudioAdapter(unittest.TestCase):
             return after
 
         self.assertEqual(asyncio.run(run()), 0, "speech_started → 송출 큐 즉시 비움")
+
+
+class TestVoiceBridgeLifecycle(unittest.TestCase):
+    def test_voice_bridge_idempotent_close(self) -> None:
+        async def run() -> tuple[str | None, str | None]:
+            from server.app import VoiceBridge
+            bridge = VoiceBridge()
+            await bridge.close("first close")
+            r1 = bridge.last_close_reason
+            await bridge.close("second close")
+            r2 = bridge.last_close_reason
+            return r1, r2
+
+        r1, r2 = asyncio.run(run())
+        self.assertEqual(r1, "first close")
+        self.assertEqual(r2, "first close", "이미 종료된 후 중복 close 호출 시 기존 reason 보존")
+
+    def test_require_token_cookie_support(self) -> None:
+        """P1 보안: Bearer/Query 외에 HttpOnly Cookie 인증 지원 검증."""
+        from starlette.requests import Request
+        from fastapi import HTTPException
+        from server.app import create_app, VoiceBridge
+
+        app = create_app(VoiceBridge(), token="secret-token")
+        dep = app.router.dependencies[0].dependency
+
+        # 1. API 경로에서 토큰 누락 -> 401
+        req_bad = Request({"type": "http", "path": "/api/status", "headers": [], "query_string": b""})
+        with self.assertRaises(HTTPException) as ctx:
+            asyncio.run(dep(req_bad))
+        self.assertEqual(ctx.exception.status_code, 401)
+
+        # 2. 쿠키 제공 -> 통과 (예외 미발생)
+        req_cookie = Request({
+            "type": "http",
+            "path": "/api/status",
+            "headers": [(b"cookie", b"bridge_token=secret-token")],
+            "query_string": b"",
+        })
+        asyncio.run(dep(req_cookie))
 
 
 if __name__ == "__main__":

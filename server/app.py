@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from contextlib import asynccontextmanager
 import json
 import os
 import time
@@ -144,6 +145,7 @@ class VoiceBridge:
         self.sessions_total = 0
         self.takeovers = 0
         self.last_close_reason: str | None = None
+        self._closed = False
         # 종료된 세션의 실측 스냅 (진단용 — 통화 후에도 수치 확인 가능)
         self.last_snapshot: dict[str, Any] | None = None
         self.datachannel_negotiated_by: str | None = None
@@ -259,6 +261,9 @@ class VoiceBridge:
             await self._close_locked(reason)
 
     async def _close_locked(self, reason: str) -> None:
+        if self._closed:
+            return
+        self._closed = True
         self.last_close_reason = reason
         # ️ 세션/어댑터 객체는 곧 정리되므로, 진단 수치를 여기서 복사해 남긴다.
         #    (통화가 끝난 뒤 '마이크가 실제로 들어갔는지' 확인할 유일한 방법)
@@ -348,6 +353,7 @@ class VoiceBridge:
             if self.pc is not None:  # 선점형 교체
                 self.takeovers += 1
                 await self._close_locked("preempted by new offer")
+            self._closed = False
 
             pc = RTCPeerConnection(RTCConfiguration(iceServers=ice_servers))
             self.pc = pc
@@ -376,11 +382,11 @@ class VoiceBridge:
                     self._push_event("unsupported_track", {"kind": track.kind})
 
             @pc.on("connectionstatechange")
-            async def _on_state() -> None:  # noqa: ANN202
+            def _on_state() -> None:  # noqa: ANN202
                 if pc.connectionState in ("failed", "closed"):
                     self._push_event("peer_closed", {"state": pc.connectionState})
                     if self.pc is pc:
-                        await self.close(f"peer {pc.connectionState}")
+                        asyncio.create_task(self.close(f"peer {pc.connectionState}"))
 
             # ️ 핸들러는 반드시 setRemoteDescription 이전에 등록 (모듈 docstring 참조)
             await pc.setRemoteDescription(RTCSessionDescription(sdp=sdp, type=sdp_type))
@@ -458,23 +464,33 @@ def create_app(bridge: VoiceBridge | None = None, token: str | None = None) -> F
     token = token if token is not None else os.environ.get("BRIDGE_AUTH_TOKEN", "")
 
     async def require_token(request: Request) -> None:
-        """시그널링/페이지 접근 토큰 검증 (P1 — 에이전트 도구 실행 보호)."""
+        """시그널링/페이지 접근 토큰 검증 (P1 — Bearer / Query / HttpOnly Cookie 지원)."""
         if not token:
+            return
+        # 정적 대시보드 페이지(/)는 열어주어 프론트엔드가 localStorage에 저장된 토큰으로 인증하도록 허용
+        if request.url.path in ("/", "/favicon.ico"):
             return
         header = request.headers.get("authorization", "")
         bearer = header[7:].strip() if header.lower().startswith("bearer ") else ""
         query = request.query_params.get("token", "")
-        if bearer == token or query == token:
+        cookie = request.cookies.get("bridge_token", "")
+        if bearer == token or query == token or cookie == token:
             return
         raise HTTPException(status_code=401, detail="invalid or missing bridge token")
 
-    app = FastAPI(title="Hermes WebRTC Bridge", version="M2", dependencies=[Depends(require_token)])
+    @asynccontextmanager
+    async def _lifespan(_: FastAPI) -> Any:
+        yield
+        await bridge.close("server shutdown")
+
+    app = FastAPI(
+        title="Hermes WebRTC Bridge",
+        version="M2",
+        dependencies=[Depends(require_token)],
+        lifespan=_lifespan,
+    )
     app.state.bridge = bridge
     app.state.token = token
-
-    @app.on_event("shutdown")
-    async def _shutdown() -> None:
-        await bridge.close("server shutdown")
 
     @app.get("/healthz")
     async def healthz() -> dict[str, Any]:
@@ -495,11 +511,20 @@ def create_app(bridge: VoiceBridge | None = None, token: str | None = None) -> F
         return {"ok": True, "reason": bridge.last_close_reason}
 
     @app.get("/", response_class=HTMLResponse)
-    async def index() -> HTMLResponse:
+    async def index(request: Request) -> HTMLResponse:
         page = STATIC_DIR / "index.html"
-        if page.exists():
-            return HTMLResponse(page.read_text(encoding="utf-8"))
-        return HTMLResponse(PLACEHOLDER_HTML)
+        content = page.read_text(encoding="utf-8") if page.exists() else PLACEHOLDER_HTML
+        resp = HTMLResponse(content)
+        query_token = request.query_params.get("token", "")
+        if token and query_token == token:
+            resp.set_cookie(
+                key="bridge_token",
+                value=token,
+                httponly=True,
+                samesite="lax",
+                max_age=86400 * 7,
+            )
+        return resp
 
     return app
 
